@@ -7,23 +7,29 @@ final class GameType {
     var name: String = ""
     var incrementsRaw: String = "1, 5, 10, -1"
     var targetScore: Int? = nil
+    var maxRounds: Int? = nil
     var lowestScoreWins: Bool = false
     var trackRounds: Bool = true
+    var useCondensedView: Bool = true
     var createdAt: Date = Date()
 
     init(
         name: String,
         incrementsRaw: String = "1, 5, 10, -1",
         targetScore: Int? = nil,
+        maxRounds: Int? = nil,
         lowestScoreWins: Bool = false,
-        trackRounds: Bool = true
+        trackRounds: Bool = true,
+        useCondensedView: Bool = true
     ) {
         self.id = UUID()
         self.name = name
         self.incrementsRaw = incrementsRaw
         self.targetScore = targetScore
+        self.maxRounds = maxRounds
         self.lowestScoreWins = lowestScoreWins
         self.trackRounds = trackRounds
+        self.useCondensedView = useCondensedView
         self.createdAt = Date()
     }
 
@@ -69,6 +75,11 @@ final class MatchScoreEntry {
         self.roundHistory = []
         self.sortOrder = sortOrder
     }
+
+    func recalculateTotalScore() {
+        let historySum = roundHistory.reduce(0, +)
+        self.score = historySum + currentRoundDelta
+    }
 }
 
 @Model
@@ -78,8 +89,10 @@ final class Match {
     var gameTypeName: String = ""
     var incrementsRaw: String = "1, 5, 10, -1"
     var targetScore: Int? = nil
+    var maxRounds: Int? = nil
     var lowestScoreWins: Bool = false
     var trackRounds: Bool = true
+    var useCondensedView: Bool = true
     var currentRound: Int = 1
     var startedAt: Date = Date()
     var completedAt: Date? = nil
@@ -95,8 +108,10 @@ final class Match {
         self.gameTypeName = gameType.name
         self.incrementsRaw = gameType.incrementsRaw
         self.targetScore = gameType.targetScore
+        self.maxRounds = gameType.maxRounds
         self.lowestScoreWins = gameType.lowestScoreWins
         self.trackRounds = gameType.trackRounds
+        self.useCondensedView = gameType.useCondensedView
         self.currentRound = 1
         self.startedAt = Date()
         self.isCompleted = false
@@ -115,6 +130,16 @@ final class Match {
     }
 
     func isTargetWinner(_ entry: MatchScoreEntry) -> Bool {
+        if let max = maxRounds, currentRound > max {
+            if lowestScoreWins {
+                guard let minScore = entries.map(\.score).min() else { return false }
+                return entry.score == minScore
+            } else {
+                guard let maxScore = entries.map(\.score).max() else { return false }
+                return entry.score == maxScore
+            }
+        }
+
         guard let target = targetScore, !entries.isEmpty else { return false }
         let someoneReachedTarget = entries.contains { $0.score >= target }
         guard someoneReachedTarget else { return false }
