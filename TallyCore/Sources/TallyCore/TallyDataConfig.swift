@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import SwiftData
 
 public struct TallyContainerResult: Sendable {
@@ -35,18 +36,25 @@ public enum TallyDataConfig {
                 startupErrorDescription: nil
             )
         } catch {
+            TallyLogger.storage.error(
+                "Persistent ModelContainer failed to initialize: \(error.localizedDescription, privacy: .public)"
+            )
             let fallbackConfig = ModelConfiguration(
                 schema: schema,
                 isStoredInMemoryOnly: true,
                 cloudKitDatabase: .none
             )
-            if let fallbackContainer = try? ModelContainer(for: schema, configurations: [fallbackConfig]) {
+            do {
+                let fallbackContainer = try ModelContainer(for: schema, configurations: [fallbackConfig])
                 return TallyContainerResult(
                     container: fallbackContainer,
                     isUsingFallbackStore: true,
                     startupErrorDescription: "Saved data could not be loaded. Changes in this session are temporary."
                 )
-            } else {
+            } catch {
+                TallyLogger.storage.fault(
+                    "In-memory fallback ModelContainer also failed: \(error.localizedDescription, privacy: .public)"
+                )
                 return TallyContainerResult(
                     container: nil,
                     isUsingFallbackStore: false,

@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 public struct PlayerRosterView: View {
     @Environment(\.modelContext) private var modelContext
@@ -7,6 +7,7 @@ public struct PlayerRosterView: View {
     @Query(sort: \TallyPlayer.name) private var players: [TallyPlayer]
 
     @State private var newPlayerName = ""
+    @State private var saveErrorMessage: String?
 
     public init() {}
 
@@ -54,11 +55,24 @@ public struct PlayerRosterView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Player Roster")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
+            }
+            .alert(
+                "Could Not Save",
+                isPresented: Binding(
+                    get: { saveErrorMessage != nil },
+                    set: { if !$0 { saveErrorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) { saveErrorMessage = nil }
+            } message: {
+                Text(saveErrorMessage ?? "")
             }
         }
     }
@@ -68,8 +82,11 @@ public struct PlayerRosterView: View {
         guard !name.isEmpty, !isDuplicateName else { return }
         let player = TallyPlayer(name: name)
         modelContext.insert(player)
-        try? modelContext.save()
-        newPlayerName = ""
+        if let error = modelContext.saveReportingError() {
+            saveErrorMessage = error
+        } else {
+            newPlayerName = ""
+        }
     }
 
     private func deletePlayers(offsets: IndexSet) {
@@ -78,6 +95,8 @@ public struct PlayerRosterView: View {
         for player in toDelete {
             modelContext.delete(player)
         }
-        try? modelContext.save()
+        if let error = modelContext.saveReportingError() {
+            saveErrorMessage = error
+        }
     }
 }

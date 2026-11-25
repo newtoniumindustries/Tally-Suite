@@ -10,14 +10,30 @@
 		AEC25712307A8EE700CF630F /* TallyCore in Frameworks */ = {isa = PBXBuildFile; productRef = AEC25711307A8EE700CF630F /* TallyCore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		AE7F4A0730799100009DBE5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AE7F4974307990C7009DBE5B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AE7F497B307990C7009DBE5B;
+			remoteInfo = "Tally Canasta";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		AE7F497C307990C7009DBE5B /* Tally Canasta.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tally Canasta.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE7F4A0130799100009DBE5B /* Tally CanastaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tally CanastaTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AE7F497E307990C7009DBE5B /* Tally Canasta */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Tally Canasta";
+			sourceTree = "<group>";
+		};
+		AE7F4A0230799100009DBE5B /* Tally CanastaTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Tally CanastaTests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -29,6 +45,11 @@
 				AEC25712307A8EE700CF630F /* TallyCore in Frameworks */,
 			);
 		};
+		AE7F4A0430799100009DBE5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -36,6 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				AE7F497E307990C7009DBE5B /* Tally Canasta */,
+				AE7F4A0230799100009DBE5B /* Tally CanastaTests */,
 				AEC25710307A8EE700CF630F /* Frameworks */,
 				AE7F497D307990C7009DBE5B /* Products */,
 			);
@@ -45,6 +67,7 @@
 			isa = PBXGroup;
 			children = (
 				AE7F497C307990C7009DBE5B /* Tally Canasta.app */,
+				AE7F4A0130799100009DBE5B /* Tally CanastaTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -80,6 +103,27 @@
 			productReference = AE7F497C307990C7009DBE5B /* Tally Canasta.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AE7F4A0630799100009DBE5B /* Tally CanastaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE7F4A0B30799100009DBE5B /* Build configuration list for PBXNativeTarget "Tally CanastaTests" */;
+			buildPhases = (
+				AE7F4A0330799100009DBE5B /* Sources */,
+				AE7F4A0430799100009DBE5B /* Frameworks */,
+				AE7F4A0530799100009DBE5B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AE7F4A0830799100009DBE5B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AE7F4A0230799100009DBE5B /* Tally CanastaTests */,
+			);
+			name = "Tally CanastaTests";
+			productName = "Tally CanastaTests";
+			productReference = AE7F4A0130799100009DBE5B /* Tally CanastaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -92,6 +136,10 @@
 				TargetAttributes = {
 					AE7F497B307990C7009DBE5B = {
 						CreatedOnToolsVersion = 27.0;
+					};
+					AE7F4A0630799100009DBE5B = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = AE7F497B307990C7009DBE5B;
 					};
 				};
 			};
@@ -110,12 +158,18 @@
 			projectRoot = "";
 			targets = (
 				AE7F497B307990C7009DBE5B /* Tally Canasta */,
+				AE7F4A0630799100009DBE5B /* Tally CanastaTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		AE7F497A307990C7009DBE5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		AE7F4A0530799100009DBE5B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -128,7 +182,20 @@
 			files = (
 			);
 		};
+		AE7F4A0330799100009DBE5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AE7F4A0830799100009DBE5B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AE7F497B307990C7009DBE5B /* Tally Canasta */;
+			targetProxy = AE7F4A0730799100009DBE5B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AE7F4987307990C8009DBE5B /* Debug configuration for PBXProject "Tally Canasta" */ = {
@@ -166,6 +233,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -183,7 +251,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -229,6 +297,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -240,7 +309,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -260,6 +329,7 @@
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Canasta";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -277,7 +347,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -292,6 +362,7 @@
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Canasta";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -309,8 +380,52 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AE7F4A0930799100009DBE5B /* Debug configuration for PBXNativeTarget "Tally CanastaTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-CanastaTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tally Canasta.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tally Canasta";
+			};
+			name = Debug;
+		};
+		AE7F4A0A30799100009DBE5B /* Release configuration for PBXNativeTarget "Tally CanastaTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-CanastaTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tally Canasta.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tally Canasta";
 			};
 			name = Release;
 		};
@@ -330,6 +445,14 @@
 			buildConfigurations = (
 				AE7F498A307990C8009DBE5B /* Debug configuration for PBXNativeTarget "Tally Canasta" */,
 				AE7F498B307990C8009DBE5B /* Release configuration for PBXNativeTarget "Tally Canasta" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		AE7F4A0B30799100009DBE5B /* Build configuration list for PBXNativeTarget "Tally CanastaTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE7F4A0930799100009DBE5B /* Debug configuration for PBXNativeTarget "Tally CanastaTests" */,
+				AE7F4A0A30799100009DBE5B /* Release configuration for PBXNativeTarget "Tally CanastaTests" */,
 			);
 			defaultConfigurationName = Release;
 		};

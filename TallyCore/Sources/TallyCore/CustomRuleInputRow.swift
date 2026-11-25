@@ -15,10 +15,13 @@ public struct CustomRuleInputRow: View {
                 .foregroundStyle(.primary)
             Spacer()
             TextField("0", text: $value)
+                #if os(iOS)
                 .keyboardType(.numberPad)
+                #endif
                 .multilineTextAlignment(.trailing)
                 .textFieldStyle(.roundedBorder)
-                .frame(minWidth: 80, maxWidth: 110)
+                .frame(minWidth: 80, maxWidth: 120)
+                .accessibilityLabel(title)
         }
     }
 }

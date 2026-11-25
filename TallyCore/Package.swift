@@ -6,20 +6,25 @@ import PackageDescription
 let package = Package(
     name: "TallyCore",
     platforms: [
-        .iOS(.v17)
+        .iOS(.v17),
+        .macOS(.v14)
     ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "TallyCore",
             targets: ["TallyCore"]
         ),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "TallyCore",
+            swiftSettings: [
+                .enableUpcomingFeature("ApproachableConcurrency"),
+            ]
+        ),
+        .testTarget(
+            name: "TallyCoreTests",
+            dependencies: ["TallyCore"],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ]
