@@ -4,27 +4,48 @@ import TallyCore
 
 @main
 struct Tally_CanastaApp: App {
-    var sharedModelContainer: ModelContainer = {
-        // We must explicitly list ALL of our root SwiftData models here
-        let schema = Schema([
-            CanastaGame.self,
-            RuleSet.self // <--- This was missing!
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    private let containerResult: TallyContainerResult
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    init() {
+        self.containerResult = TallyDataConfig.makeContainer(for: [
+            CanastaGame.self,
+            Round.self,
+            RuleSet.self,
+            TallyPlayer.self
+        ])
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if let container = containerResult.container {
+                VStack(spacing: 0) {
+                    if containerResult.isUsingFallbackStore,
+                       let warning = containerResult.startupErrorDescription {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                            Text(warning)
+                                .font(.caption.bold())
+                        }
+                        .foregroundStyle(Color.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.orange)
+                    }
+
+                    ContentView()
+                }
+                .modelContainer(container)
+            } else {
+                ContentUnavailableView(
+                    "Storage Unavailable",
+                    systemImage: "externaldrive.badge.exclamationmark",
+                    description: Text(
+                        containerResult.startupErrorDescription
+                            ?? "Please restart Tally: Canasta to try again."
+                    )
+                )
+            }
         }
-        .modelContainer(for: [CanastaGame.self, RuleSet.self, TallyPlayer.self])
     }
 }
-
-

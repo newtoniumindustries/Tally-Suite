@@ -1,6 +1,50 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import UIKit
+
+private enum ScoreMath {
+    nonisolated static let maxMagnitude = 999_999_999
+
+    nonisolated static func clamp(_ value: Int) -> Int {
+        min(max(value, -maxMagnitude), maxMagnitude)
+    }
+
+    nonisolated static func parseInt(_ text: String) -> Int? {
+        guard let value = Int(text.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            return nil
+        }
+        return clamp(value)
+    }
+
+    nonisolated static func parsePositiveInt(_ text: String) -> Int? {
+        guard let value = Int(text.trimmingCharacters(in: .whitespacesAndNewlines)), value > 0 else {
+            return nil
+        }
+        return min(value, maxMagnitude)
+    }
+
+    nonisolated static func add(_ lhs: Int, _ rhs: Int) -> Int {
+        let (sum, overflow) = lhs.addingReportingOverflow(rhs)
+        if overflow {
+            return rhs > 0 ? maxMagnitude : -maxMagnitude
+        }
+        return clamp(sum)
+    }
+
+    nonisolated static func subtract(_ lhs: Int, _ rhs: Int) -> Int {
+        let (diff, overflow) = lhs.subtractingReportingOverflow(rhs)
+        if overflow {
+            return rhs > 0 ? -maxMagnitude : maxMagnitude
+        }
+        return clamp(diff)
+    }
+}
+
+@MainActor
+private func hideKeyboard() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+}
 
 struct ContentView: View {
     var body: some View {
@@ -29,6 +73,7 @@ struct ActiveMatchesView: View {
     @State private var showingNewMatchSheet = false
     @State private var didSeedDefaults = false
     @State private var selectedMatchForNavigation: Match?
+    @State private var matchPendingReset: Match?
 
     private var activeMatches: [Match] {
         matches.filter { !$0.isCompleted }
@@ -65,8 +110,10 @@ struct ActiveMatchesView: View {
                                     }
                                 }
                                 .onDelete { offsets in
-                                    for index in offsets {
-                                        context.delete(activeMatches[index])
+                                    let snapshot = activeMatches
+                                    let toDelete = offsets.compactMap { snapshot.indices.contains($0) ? snapshot[$0] : nil }
+                                    for match in toDelete {
+                                        context.delete(match)
                                     }
                                     try? context.save()
                                 }
@@ -90,10 +137,8 @@ struct ActiveMatchesView: View {
                                                 Label("Reopen & Continue Scoring", systemImage: "arrow.uturn.backward.circle")
                                             }
 
-                                            Button {
-                                                match.restartMatchFromZero()
-                                                try? context.save()
-                                                selectedMatchForNavigation = match
+                                            Button(role: .destructive) {
+                                                matchPendingReset = match
                                             } label: {
                                                 Label("Restart from 0 (Reset Scores)", systemImage: "arrow.counterclockwise.circle")
                                             }
@@ -109,8 +154,10 @@ struct ActiveMatchesView: View {
                                     }
                                 }
                                 .onDelete { offsets in
-                                    for index in offsets {
-                                        context.delete(recentCompletedMatches[index])
+                                    let snapshot = recentCompletedMatches
+                                    let toDelete = offsets.compactMap { snapshot.indices.contains($0) ? snapshot[$0] : nil }
+                                    for match in toDelete {
+                                        context.delete(match)
                                     }
                                     try? context.save()
                                 }
@@ -140,6 +187,26 @@ struct ActiveMatchesView: View {
             }
             .sheet(isPresented: $showingNewMatchSheet) {
                 NewMatchSheet()
+            }
+            .alert(
+                "Reset Match to 0?",
+                isPresented: Binding(
+                    get: { matchPendingReset != nil },
+                    set: { if !$0 { matchPendingReset = nil } }
+                ),
+                presenting: matchPendingReset
+            ) { match in
+                Button("Reset to 0", role: .destructive) {
+                    match.restartMatchFromZero()
+                    try? context.save()
+                    selectedMatchForNavigation = match
+                    matchPendingReset = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    matchPendingReset = nil
+                }
+            } message: { match in
+                Text("This clears all scores and round history for \(match.gameTypeName) and restarts from Round 1.")
             }
         }
     }
@@ -180,9 +247,12 @@ struct MatchRowSummaryView: View {
                         .background(Color.green.opacity(0.15), in: Capsule())
                         .foregroundStyle(Color.green)
                 } else if match.trackRounds {
-                    let roundText = match.maxRounds != nil
-                        ? "Round \(match.currentRound)/\(match.maxRounds!)"
-                        : "Round \(match.currentRound)"
+                    let roundText: String = {
+                        if let maxR = match.maxRounds, maxR > 0 {
+                            return "Round \(min(match.currentRound, maxR))/\(maxR)"
+                        }
+                        return "Round \(match.currentRound)"
+                    }()
                     Text(roundText)
                         .font(.caption.bold())
                         .padding(.horizontal, 8)
@@ -238,9 +308,7 @@ struct NewMatchSheet: View {
                         }
                         .onChange(of: selectedGameTypeID) { _, newID in
                             guard let game = gameTypes.first(where: { $0.id == newID }) else { return }
-                            customTargetScoreText = game.targetScore != nil ? String(game.targetScore!) : ""
-                            customMaxRoundsText = game.maxRounds != nil ? String(game.maxRounds!) : ""
-                            useCondensedView = game.useCondensedView
+                            applyGameTypeDefaults(game)
                         }
 
                         HStack {
@@ -271,9 +339,7 @@ struct NewMatchSheet: View {
                     NavigationLink {
                         CreateGameTypeInlineView { createdGame in
                             selectedGameTypeID = createdGame.id
-                            customTargetScoreText = createdGame.targetScore != nil ? String(createdGame.targetScore!) : ""
-                            customMaxRoundsText = createdGame.maxRounds != nil ? String(createdGame.maxRounds!) : ""
-                            useCondensedView = createdGame.useCondensedView
+                            applyGameTypeDefaults(createdGame)
                         }
                     } label: {
                         Label("Create New Game Type", systemImage: "plus.circle")
@@ -309,6 +375,7 @@ struct NewMatchSheet: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("New Match")
             .onAppear {
                 syncDefaultGameSelection()
@@ -326,28 +393,38 @@ struct NewMatchSheet: View {
                     }
                     .disabled(selectedGameType == nil || selectedTeamIDs.count < 2)
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { hideKeyboard() }
+                }
             }
         }
+    }
+
+    private func applyGameTypeDefaults(_ game: GameType) {
+        customTargetScoreText = game.targetScore.map(String.init) ?? ""
+        customMaxRoundsText = game.maxRounds.map(String.init) ?? ""
+        useCondensedView = game.useCondensedView
     }
 
     private func syncDefaultGameSelection() {
         if selectedGameTypeID == nil, let first = gameTypes.first {
             selectedGameTypeID = first.id
-            customTargetScoreText = first.targetScore != nil ? String(first.targetScore!) : ""
-            customMaxRoundsText = first.maxRounds != nil ? String(first.maxRounds!) : ""
-            useCondensedView = first.useCondensedView
+            applyGameTypeDefaults(first)
         }
     }
 
     private func startMatch() {
         guard let game = selectedGameType else { return }
         let chosenTeams = teams.filter { selectedTeamIDs.contains($0.id) }
+        guard chosenTeams.count >= 2 else { return }
+
         let entries = chosenTeams.enumerated().map { index, team in
             MatchScoreEntry(teamID: team.id, teamName: team.name, score: 0, sortOrder: index)
         }
         let match = Match(gameType: game, entries: entries)
-        match.targetScore = Int(customTargetScoreText.trimmingCharacters(in: .whitespaces))
-        match.maxRounds = Int(customMaxRoundsText.trimmingCharacters(in: .whitespaces))
+        match.targetScore = ScoreMath.parsePositiveInt(customTargetScoreText)
+        match.maxRounds = ScoreMath.parsePositiveInt(customMaxRoundsText)
         match.useCondensedView = useCondensedView
         context.insert(match)
         try? context.save()
@@ -362,7 +439,7 @@ struct CreateGameTypeInlineView: View {
     var onCreated: (GameType) -> Void
 
     @State private var name = ""
-    @State private var increments = "1, 5, 10, -1"
+    @State private var increments = ScoreIncrementParser.defaultRaw
     @State private var target = ""
     @State private var maxRounds = ""
     @State private var trackRounds = true
@@ -385,17 +462,18 @@ struct CreateGameTypeInlineView: View {
                 Toggle("Lowest Score Wins", isOn: $lowWins)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Create Game Type")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    let trimmed = name.trimmingCharacters(in: .whitespaces)
+                    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
                     let newGame = GameType(
                         name: trimmed,
                         incrementsRaw: increments,
-                        targetScore: Int(target.trimmingCharacters(in: .whitespaces)),
-                        maxRounds: Int(maxRounds.trimmingCharacters(in: .whitespaces)),
+                        targetScore: ScoreMath.parsePositiveInt(target),
+                        maxRounds: ScoreMath.parsePositiveInt(maxRounds),
                         lowestScoreWins: lowWins,
                         trackRounds: trackRounds,
                         useCondensedView: useCondensedView
@@ -405,7 +483,11 @@ struct CreateGameTypeInlineView: View {
                     onCreated(newGame)
                     dismiss()
                 }
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { hideKeyboard() }
             }
         }
     }
@@ -417,17 +499,22 @@ struct LiveScoreboardView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingRulesSheet = false
     @State private var showingRoundLedger = true
+    @State private var showingResetConfirmation = false
+
+    private var activeMaxRounds: Int? {
+        guard let maxR = match.maxRounds, maxR > 0 else { return nil }
+        return maxR
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: match.useCondensedView ? 8 : 14) {
-                // Completed Match Banner with Restart Actions
                 if match.isCompleted {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Image(systemName: "checkmark.seal.fill")
                                 .foregroundStyle(Color.green)
-                            Text("Match Submitted")
+                            Text("Match Submitted (Read-Only)")
                                 .font(.subheadline.bold())
                             Spacer()
                         }
@@ -448,10 +535,7 @@ struct LiveScoreboardView: View {
                             }
 
                             Button {
-                                withAnimation {
-                                    match.restartMatchFromZero()
-                                    try? context.save()
-                                }
+                                showingResetConfirmation = true
                             } label: {
                                 Label("Reset to 0", systemImage: "arrow.counterclockwise.circle.fill")
                                     .font(.caption.bold())
@@ -470,21 +554,21 @@ struct LiveScoreboardView: View {
                 if match.trackRounds {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            let displayRound = match.maxRounds != nil
-                                ? min(match.currentRound, match.maxRounds!)
-                                : match.currentRound
-                            let roundDisplay = match.maxRounds != nil
-                                ? "ROUND \(displayRound) of \(match.maxRounds!)"
-                                : "ROUND \(displayRound)"
+                            let roundDisplay: String = {
+                                if let maxR = activeMaxRounds {
+                                    return "ROUND \(min(match.currentRound, maxR)) of \(maxR)"
+                                }
+                                return "ROUND \(match.currentRound)"
+                            }()
                             Text(roundDisplay)
                                 .font(.caption.weight(.heavy))
                                 .foregroundStyle(Color.blue)
 
-                            if let maxR = match.maxRounds, match.currentRound > maxR {
+                            if let maxR = activeMaxRounds, match.currentRound > maxR {
                                 Text("Final Results (Max Rounds Reached)")
                                     .font(.caption.bold())
                                     .foregroundStyle(Color.green)
-                            } else if let target = match.targetScore {
+                            } else if let target = match.targetScore, target > 0 {
                                 Label("Goal: \(target) pts (\(match.lowestScoreWins ? "Low Wins" : "High Wins"))", systemImage: "flag.checkered")
                                     .font(.caption.bold())
                             } else {
@@ -497,10 +581,11 @@ struct LiveScoreboardView: View {
                         Spacer()
 
                         if !match.isCompleted {
+                            let isFinal = activeMaxRounds.map { match.currentRound >= $0 } ?? false
                             Button {
+                                hideKeyboard()
                                 advanceRound()
                             } label: {
-                                let isFinal = match.maxRounds != nil && match.currentRound >= match.maxRounds!
                                 Label(isFinal ? "Finish Game" : "Next Round", systemImage: isFinal ? "checkmark.circle.fill" : "arrow.right.circle.fill")
                                     .font(.caption.bold())
                                     .padding(.horizontal, 12)
@@ -514,7 +599,7 @@ struct LiveScoreboardView: View {
                     .padding(.vertical, 8)
                     .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal)
-                } else if let target = match.targetScore {
+                } else if let target = match.targetScore, target > 0 {
                     HStack {
                         Label("Goal: \(target) pts (\(match.lowestScoreWins ? "Low Wins" : "High Wins"))", systemImage: "flag.checkered")
                             .font(.caption.bold())
@@ -528,7 +613,7 @@ struct LiveScoreboardView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "trophy.fill")
                             .font(.headline)
-                            .foregroundStyle(Color.yellow)
+                            .foregroundStyle(Color.orange)
                         Text("\(winners.map(\.teamName).joined(separator: " & ")) leads / wins!")
                             .font(.subheadline.bold())
                         Spacer()
@@ -549,19 +634,22 @@ struct LiveScoreboardView: View {
                         increments: match.increments,
                         currentRound: match.currentRound,
                         targetScore: match.targetScore,
+                        lowestScoreWins: match.lowestScoreWins,
                         trackRounds: match.trackRounds,
                         useCondensedView: match.useCondensedView,
-                        isWinnerHighlighted: match.isTargetWinner(entry)
+                        isWinnerHighlighted: match.isTargetWinner(entry),
+                        isReadOnly: match.isCompleted
                     )
                 }
 
                 if match.trackRounds && (!match.roundHistoryEmpty || match.currentRound > 1 || match.sortedEntries.contains(where: { $0.currentRoundDelta != 0 })) {
-                    RoundLedgerSection(match: match, isExpanded: $showingRoundLedger)
+                    RoundLedgerSection(match: match, isExpanded: $showingRoundLedger, isReadOnly: match.isCompleted)
                         .padding(.horizontal)
                 }
 
                 if !match.isCompleted {
                     Button {
+                        hideKeyboard()
                         completeMatch()
                     } label: {
                         Label("Finish Match & Record Standings", systemImage: "checkmark.seal.fill")
@@ -587,10 +675,26 @@ struct LiveScoreboardView: View {
                 } label: {
                     Label("Adjust Scoring", systemImage: "slider.horizontal.3")
                 }
+                .disabled(match.isCompleted)
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { hideKeyboard() }
             }
         }
         .sheet(isPresented: $showingRulesSheet) {
             AdjustMatchScoringSheet(match: match)
+        }
+        .alert("Reset Match to 0?", isPresented: $showingResetConfirmation) {
+            Button("Reset to 0", role: .destructive) {
+                withAnimation {
+                    match.restartMatchFromZero()
+                    try? context.save()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This clears all scores and round history for \(match.gameTypeName) and restarts from Round 1.")
         }
     }
 
@@ -601,7 +705,7 @@ struct LiveScoreboardView: View {
             entry.recalculateTotalScore()
         }
 
-        if let maxR = match.maxRounds, match.currentRound >= maxR {
+        if let maxR = activeMaxRounds, match.currentRound >= maxR {
             match.currentRound += 1
             completeMatch()
         } else {
@@ -641,14 +745,14 @@ extension Match {
 
     /// Un-submits a completed match and restores the active round state so scoring can continue
     func reopenMatch() {
-        if let maxR = maxRounds, currentRound > maxR {
+        if let maxR = maxRounds, maxR > 0, currentRound > maxR {
             currentRound = maxR
         }
         if trackRounds {
             for entry in entries {
                 while entry.roundHistory.count >= currentRound && !entry.roundHistory.isEmpty {
                     let restoredDelta = entry.roundHistory.removeLast()
-                    entry.currentRoundDelta += restoredDelta
+                    entry.currentRoundDelta = ScoreMath.add(entry.currentRoundDelta, restoredDelta)
                 }
                 entry.recalculateTotalScore()
             }
@@ -673,15 +777,22 @@ extension Match {
 }
 
 struct TeamScoreCard: View {
+    @Environment(\.modelContext) private var context
     @Bindable var entry: MatchScoreEntry
     let increments: [Int]
     let currentRound: Int
     let targetScore: Int?
+    let lowestScoreWins: Bool
     let trackRounds: Bool
     let useCondensedView: Bool
     let isWinnerHighlighted: Bool
+    let isReadOnly: Bool
 
     @State private var customInputText: String = ""
+
+    private var parsedCustomInput: Int? {
+        ScoreMath.parseInt(customInputText)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: useCondensedView ? 6 : 12) {
@@ -708,19 +819,19 @@ struct TeamScoreCard: View {
                                 .font(.caption2.bold())
                                 .foregroundStyle(Color.secondary)
 
-                            if let target = targetScore, !isWinnerHighlighted {
+                            if let target = targetScore, target > 0, !isWinnerHighlighted {
                                 let remaining = max(0, target - entry.score)
                                 if remaining > 0 {
-                                    Text("| \(remaining) left")
+                                    Text(lowestScoreWins ? "| \(remaining) to limit" : "| \(remaining) left")
                                         .font(.caption2)
                                         .foregroundStyle(Color.secondary)
                                 }
                             }
                         }
-                    } else if let target = targetScore, !isWinnerHighlighted {
+                    } else if let target = targetScore, target > 0, !isWinnerHighlighted {
                         let remaining = max(0, target - entry.score)
                         if remaining > 0 {
-                            Text("\(remaining) pts left")
+                            Text(lowestScoreWins ? "\(remaining) pts to limit" : "\(remaining) pts left")
                                 .font(.caption2)
                                 .foregroundStyle(Color.secondary)
                         }
@@ -732,56 +843,63 @@ struct TeamScoreCard: View {
                 Text("\(entry.score)")
                     .font(.system(size: useCondensedView ? 28 : 38, weight: .heavy, design: .rounded))
                     .foregroundStyle(isWinnerHighlighted ? Color.green : Color.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .contentTransition(.numericText())
             }
 
-            if !useCondensedView {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(increments, id: \.self) { delta in
-                            Button {
-                                applyScoreChange(delta: delta)
-                            } label: {
-                                Text(delta > 0 ? "+\(delta)" : "\(delta)")
-                                    .font(.subheadline.bold())
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(delta >= 0 ? Color.blue.opacity(0.15) : Color.red.opacity(0.15))
-                                    .foregroundStyle(delta >= 0 ? Color.blue : Color.red)
-                                    .clipShape(Capsule())
+            if !isReadOnly {
+                if !useCondensedView {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(increments, id: \.self) { delta in
+                                Button {
+                                    applyScoreChange(delta: delta)
+                                } label: {
+                                    Text(delta > 0 ? "+\(delta)" : "\(delta)")
+                                        .font(.subheadline.bold())
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .background(delta >= 0 ? Color.blue.opacity(0.15) : Color.red.opacity(0.15))
+                                        .foregroundStyle(delta >= 0 ? Color.blue : Color.red)
+                                        .clipShape(Capsule())
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            HStack(spacing: 6) {
-                TextField("Points (+/- or total)", text: $customInputText)
-                    .keyboardType(.numbersAndPunctuation)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.subheadline)
+                HStack(spacing: 6) {
+                    TextField("Points (+/- or total)", text: $customInputText)
+                        .keyboardType(.numbersAndPunctuation)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.subheadline)
 
-                Button("Add To") {
-                    if let val = Int(customInputText.trimmingCharacters(in: .whitespaces)) {
-                        applyScoreChange(delta: val)
-                        customInputText = ""
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(useCondensedView ? .small : .regular)
-
-                Button("Set") {
-                    if let val = Int(customInputText.trimmingCharacters(in: .whitespaces)) {
-                        let diff = val - entry.score
-                        entry.score = val
-                        if trackRounds {
-                            entry.currentRoundDelta += diff
+                    Button("Add To") {
+                        if let val = parsedCustomInput {
+                            applyScoreChange(delta: val)
+                            customInputText = ""
                         }
-                        customInputText = ""
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(useCondensedView ? .small : .regular)
+                    .disabled(parsedCustomInput == nil)
+
+                    Button("Set") {
+                        if let val = parsedCustomInput {
+                            let diff = ScoreMath.subtract(val, entry.score)
+                            entry.score = val
+                            if trackRounds {
+                                entry.currentRoundDelta = ScoreMath.add(entry.currentRoundDelta, diff)
+                            }
+                            try? context.save()
+                            customInputText = ""
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(useCondensedView ? .small : .regular)
+                    .disabled(parsedCustomInput == nil)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(useCondensedView ? .small : .regular)
             }
         }
         .padding(.horizontal, 12)
@@ -800,10 +918,11 @@ struct TeamScoreCard: View {
     }
 
     private func applyScoreChange(delta: Int) {
-        entry.score += delta
+        entry.score = ScoreMath.add(entry.score, delta)
         if trackRounds {
-            entry.currentRoundDelta += delta
+            entry.currentRoundDelta = ScoreMath.add(entry.currentRoundDelta, delta)
         }
+        try? context.save()
     }
 }
 
@@ -813,6 +932,7 @@ struct RoundLedgerSection: View {
     @Environment(\.modelContext) private var context
     let match: Match
     @Binding var isExpanded: Bool
+    let isReadOnly: Bool
 
     @State private var isEditingLedger: Bool = false
     @State private var draftScores: [String: String] = [:]
@@ -823,6 +943,9 @@ struct RoundLedgerSection: View {
     }
 
     var body: some View {
+        let entries = match.sortedEntries
+        let needsHorizontalScroll = entries.count > 2
+
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Button {
@@ -840,7 +963,7 @@ struct RoundLedgerSection: View {
 
                 Spacer()
 
-                if isExpanded && !completedRoundsArray.isEmpty {
+                if isExpanded && !completedRoundsArray.isEmpty && !isReadOnly {
                     Button {
                         toggleEditMode()
                     } label: {
@@ -857,69 +980,92 @@ struct RoundLedgerSection: View {
             if isExpanded {
                 Divider()
 
-                HStack {
-                    Text("Rnd")
-                        .font(.caption.bold())
-                        .foregroundStyle(Color.secondary)
-                        .frame(width: 42, alignment: .leading)
-                    ForEach(match.sortedEntries) { entry in
-                        Text(entry.teamName)
-                            .font(.caption.bold())
-                            .lineLimit(1)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                if needsHorizontalScroll {
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        ledgerRows(entries: entries, fixedColumnWidth: 76)
                     }
-                }
-
-                ForEach(completedRoundsArray, id: \.self) { roundIndex in
-                    HStack {
-                        Text("R\(roundIndex + 1)")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(Color.secondary)
-                            .frame(width: 42, alignment: .leading)
-
-                        ForEach(match.sortedEntries) { entry in
-                            let val = roundIndex < entry.roundHistory.count ? entry.roundHistory[roundIndex] : 0
-
-                            if isEditingLedger {
-                                TextField("0", text: bindingForCell(entry: entry, roundIndex: roundIndex, fallback: val))
-                                    .keyboardType(.numbersAndPunctuation)
-                                    .multilineTextAlignment(.trailing)
-                                    .textFieldStyle(.roundedBorder)
-                                    .font(.subheadline.bold().monospacedDigit())
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                            } else {
-                                Text(val >= 0 ? "+\(val)" : "\(val)")
-                                    .font(.subheadline.bold().monospacedDigit())
-                                    .foregroundStyle(val >= 0 ? Color.primary : Color.red)
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                    .padding(.vertical, 4)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 2)
-                }
-
-                if !match.isCompleted {
-                    HStack {
-                        Text("R\(match.currentRound)*")
-                            .font(.caption.bold().monospacedDigit())
-                            .foregroundStyle(Color.blue)
-                            .frame(width: 42, alignment: .leading)
-
-                        ForEach(match.sortedEntries) { entry in
-                            let val = entry.currentRoundDelta
-                            Text(val >= 0 ? "+\(val)" : "\(val)")
-                                .font(.subheadline.bold().monospacedDigit())
-                                .foregroundStyle(Color.blue)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                        }
-                    }
-                    .padding(.top, 2)
+                } else {
+                    ledgerRows(entries: entries, fixedColumnWidth: nil)
                 }
             }
         }
         .padding()
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+        .onChange(of: isReadOnly) { _, readOnly in
+            if readOnly {
+                isEditingLedger = false
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func ledgerRows(entries: [MatchScoreEntry], fixedColumnWidth: CGFloat?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text("Rnd")
+                    .font(.caption.bold())
+                    .foregroundStyle(Color.secondary)
+                    .frame(width: 44, alignment: .leading)
+
+                ForEach(entries) { entry in
+                    Text(entry.teamName)
+                        .font(.caption.bold())
+                        .lineLimit(1)
+                        .frame(width: fixedColumnWidth, alignment: .trailing)
+                        .frame(maxWidth: fixedColumnWidth == nil ? .infinity : nil, alignment: .trailing)
+                }
+            }
+
+            ForEach(completedRoundsArray, id: \.self) { roundIndex in
+                HStack(spacing: 8) {
+                    Text("R\(roundIndex + 1)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(Color.secondary)
+                        .frame(width: 44, alignment: .leading)
+
+                    ForEach(entries) { entry in
+                        let val = roundIndex < entry.roundHistory.count ? entry.roundHistory[roundIndex] : 0
+
+                        if isEditingLedger && !isReadOnly {
+                            TextField("0", text: bindingForCell(entry: entry, roundIndex: roundIndex, fallback: val))
+                                .keyboardType(.numbersAndPunctuation)
+                                .multilineTextAlignment(.trailing)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.subheadline.bold().monospacedDigit())
+                                .frame(width: fixedColumnWidth, alignment: .trailing)
+                                .frame(maxWidth: fixedColumnWidth == nil ? .infinity : nil, alignment: .trailing)
+                        } else {
+                            Text(val >= 0 ? "+\(val)" : "\(val)")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(val >= 0 ? Color.primary : Color.red)
+                                .frame(width: fixedColumnWidth, alignment: .trailing)
+                                .frame(maxWidth: fixedColumnWidth == nil ? .infinity : nil, alignment: .trailing)
+                                .padding(.vertical, 4)
+                        }
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+
+            if !match.isCompleted {
+                HStack(spacing: 8) {
+                    Text("R\(match.currentRound)*")
+                        .font(.caption.bold().monospacedDigit())
+                        .foregroundStyle(Color.blue)
+                        .frame(width: 44, alignment: .leading)
+
+                    ForEach(entries) { entry in
+                        let val = entry.currentRoundDelta
+                        Text(val >= 0 ? "+\(val)" : "\(val)")
+                            .font(.subheadline.bold().monospacedDigit())
+                            .foregroundStyle(Color.blue)
+                            .frame(width: fixedColumnWidth, alignment: .trailing)
+                            .frame(maxWidth: fixedColumnWidth == nil ? .infinity : nil, alignment: .trailing)
+                    }
+                }
+                .padding(.top, 2)
+            }
+        }
     }
 
     private func cellKey(entryID: UUID, roundIndex: Int) -> String {
@@ -932,7 +1078,7 @@ struct RoundLedgerSection: View {
             get: { draftScores[key] ?? String(fallback) },
             set: { newValue in
                 draftScores[key] = newValue
-                if let parsed = Int(newValue.trimmingCharacters(in: .whitespaces)),
+                if let parsed = ScoreMath.parseInt(newValue),
                    roundIndex < entry.roundHistory.count {
                     entry.roundHistory[roundIndex] = parsed
                     entry.recalculateTotalScore()
@@ -943,11 +1089,12 @@ struct RoundLedgerSection: View {
 
     private func toggleEditMode() {
         if isEditingLedger {
+            hideKeyboard()
             for entry in match.entries {
                 for rIndex in 0..<entry.roundHistory.count {
                     let key = cellKey(entryID: entry.id, roundIndex: rIndex)
                     if let text = draftScores[key],
-                       let parsed = Int(text.trimmingCharacters(in: .whitespaces)) {
+                       let parsed = ScoreMath.parseInt(text) {
                         entry.roundHistory[rIndex] = parsed
                     }
                 }
@@ -969,20 +1116,27 @@ struct RoundLedgerSection: View {
 }
 
 struct AdjustMatchScoringSheet: View {
-    @Bindable var match: Match
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Bindable var match: Match
+
+    @State private var didLoad = false
+    @State private var useCondensedView: Bool = true
+    @State private var incrementsRaw: String = ScoreIncrementParser.defaultRaw
     @State private var targetText: String = ""
     @State private var maxRoundsText: String = ""
+    @State private var trackRounds: Bool = true
+    @State private var lowestScoreWins: Bool = false
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Scoreboard Layout") {
-                    Toggle("Condensed View (Hide + / - Buttons)", isOn: $match.useCondensedView)
+                    Toggle("Condensed View (Hide + / - Buttons)", isOn: $useCondensedView)
                 }
-                if !match.useCondensedView {
+                if !useCondensedView {
                     Section("Point Buttons (Comma-Separated)") {
-                        TextField("e.g. 1, 5, 10, -1", text: $match.incrementsRaw)
+                        TextField("e.g. 1, 5, 10, -1", text: $incrementsRaw)
                     }
                 }
                 Section("Amount Needed to Win") {
@@ -994,31 +1148,58 @@ struct AdjustMatchScoringSheet: View {
                         .keyboardType(.numberPad)
                 }
                 Section("Round Tracking") {
-                    Toggle("Track Rounds & Ledger", isOn: $match.trackRounds)
+                    Toggle("Track Rounds & Ledger", isOn: $trackRounds)
                 }
                 Section("Win Rule") {
-                    Toggle("Lowest Score Wins", isOn: $match.lowestScoreWins)
+                    Toggle("Lowest Score Wins", isOn: $lowestScoreWins)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Scoring Details")
             .onAppear {
-                if let target = match.targetScore {
-                    targetText = String(target)
-                }
-                if let maxR = match.maxRounds {
-                    maxRoundsText = String(maxR)
-                }
+                guard !didLoad else { return }
+                didLoad = true
+                useCondensedView = match.useCondensedView
+                incrementsRaw = match.incrementsRaw
+                targetText = match.targetScore.map(String.init) ?? ""
+                maxRoundsText = match.maxRounds.map(String.init) ?? ""
+                trackRounds = match.trackRounds
+                lowestScoreWins = match.lowestScoreWins
             }
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        match.targetScore = Int(targetText.trimmingCharacters(in: .whitespaces))
-                        match.maxRounds = Int(maxRoundsText.trimmingCharacters(in: .whitespaces))
+                        applyChanges()
                         dismiss()
                     }
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { hideKeyboard() }
+                }
             }
         }
+    }
+
+    private func applyChanges() {
+        let enablingRoundTracking = !match.trackRounds && trackRounds
+        if enablingRoundTracking {
+            for entry in match.entries {
+                let historySum = entry.roundHistory.reduce(0, ScoreMath.add)
+                entry.currentRoundDelta = ScoreMath.subtract(entry.score, historySum)
+            }
+        }
+
+        match.useCondensedView = useCondensedView
+        match.incrementsRaw = incrementsRaw
+        match.targetScore = ScoreMath.parsePositiveInt(targetText)
+        match.maxRounds = ScoreMath.parsePositiveInt(maxRoundsText)
+        match.trackRounds = trackRounds
+        match.lowestScoreWins = lowestScoreWins
+        try? context.save()
     }
 }
 
@@ -1044,8 +1225,16 @@ struct StandingsView: View {
 
     @State private var selectedGameTypeID: UUID? = nil
 
-    private var selectedGameName: String {
+    private var effectiveGameTypeID: UUID? {
         guard let id = selectedGameTypeID,
+              gameTypes.contains(where: { $0.id == id }) else {
+            return nil
+        }
+        return id
+    }
+
+    private var selectedGameName: String {
+        guard let id = effectiveGameTypeID,
               let game = gameTypes.first(where: { $0.id == id }) else {
             return "All Games"
         }
@@ -1055,7 +1244,7 @@ struct StandingsView: View {
     private var completedMatches: [Match] {
         allMatches.filter { match in
             guard match.isCompleted else { return false }
-            if let filterID = selectedGameTypeID {
+            if let filterID = effectiveGameTypeID {
                 return match.gameTypeID == filterID
             }
             return true
@@ -1065,17 +1254,24 @@ struct StandingsView: View {
     private var standings: [TeamStandingRow] {
         var map: [UUID: TeamStandingRow] = [:]
         for match in completedMatches {
+            let bestScore: Int? = match.lowestScoreWins
+                ? match.entries.map(\.score).min()
+                : match.entries.map(\.score).max()
+
             for entry in match.entries {
                 var row = map[entry.teamID] ?? TeamStandingRow(id: entry.teamID, teamName: entry.teamName)
-                row.totalPoints += entry.score
+                row.totalPoints = ScoreMath.add(row.totalPoints, entry.score)
+
                 if let winnerID = match.winnerTeamID {
                     if winnerID == entry.teamID {
                         row.wins += 1
                     } else {
                         row.losses += 1
                     }
-                } else {
+                } else if let bestScore, entry.score == bestScore {
                     row.ties += 1
+                } else {
+                    row.losses += 1
                 }
                 map[entry.teamID] = row
             }
@@ -1094,7 +1290,7 @@ struct StandingsView: View {
                     HStack(spacing: 8) {
                         FilterPillButton(
                             title: "All Games",
-                            isSelected: selectedGameTypeID == nil
+                            isSelected: effectiveGameTypeID == nil
                         ) {
                             selectedGameTypeID = nil
                         }
@@ -1102,7 +1298,7 @@ struct StandingsView: View {
                         ForEach(gameTypes) { game in
                             FilterPillButton(
                                 title: game.name,
-                                isSelected: selectedGameTypeID == game.id
+                                isSelected: effectiveGameTypeID == game.id
                             ) {
                                 selectedGameTypeID = game.id
                             }
@@ -1138,7 +1334,7 @@ struct StandingsView: View {
                                 HStack(spacing: 12) {
                                     Text("#\(index + 1)")
                                         .font(.subheadline.weight(.heavy))
-                                        .foregroundStyle(index == 0 ? Color.yellow : Color.secondary)
+                                        .foregroundStyle(index == 0 ? Color.orange : Color.secondary)
                                         .frame(width: 32, alignment: .leading)
 
                                     VStack(alignment: .leading, spacing: 3) {
@@ -1227,7 +1423,7 @@ struct SetupView: View {
 
     @State private var newTeamName = ""
     @State private var newGameName = ""
-    @State private var newGameIncrements = "1, 5, 10, -1"
+    @State private var newGameIncrements = ScoreIncrementParser.defaultRaw
     @State private var newGameTargetScore = ""
     @State private var newGameMaxRounds = ""
     @State private var newGameTrackRounds = true
@@ -1241,14 +1437,15 @@ struct SetupView: View {
                     HStack {
                         TextField("Team Name", text: $newTeamName)
                         Button("Add") {
-                            let trimmed = newTeamName.trimmingCharacters(in: .whitespaces)
+                            let trimmed = newTeamName.trimmingCharacters(in: .whitespacesAndNewlines)
                             guard !trimmed.isEmpty else { return }
                             context.insert(Team(name: trimmed))
                             try? context.save()
                             newTeamName = ""
+                            hideKeyboard()
                         }
                         .buttonStyle(.borderedProminent)
-                        .disabled(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(newTeamName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 }
 
@@ -1257,7 +1454,11 @@ struct SetupView: View {
                         Text(team.name)
                     }
                     .onDelete { offsets in
-                        for i in offsets { context.delete(teams[i]) }
+                        let snapshot = teams
+                        let toDelete = offsets.compactMap { snapshot.indices.contains($0) ? snapshot[$0] : nil }
+                        for team in toDelete {
+                            context.delete(team)
+                        }
                         try? context.save()
                     }
                 }
@@ -1276,10 +1477,10 @@ struct SetupView: View {
                     Toggle("Lowest Score Wins", isOn: $newGameLowestWins)
 
                     Button("Save Game Type") {
-                        let trimmed = newGameName.trimmingCharacters(in: .whitespaces)
+                        let trimmed = newGameName.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        let target = Int(newGameTargetScore.trimmingCharacters(in: .whitespaces))
-                        let maxR = Int(newGameMaxRounds.trimmingCharacters(in: .whitespaces))
+                        let target = ScoreMath.parsePositiveInt(newGameTargetScore)
+                        let maxR = ScoreMath.parsePositiveInt(newGameMaxRounds)
                         context.insert(
                             GameType(
                                 name: trimmed,
@@ -1293,11 +1494,15 @@ struct SetupView: View {
                         )
                         try? context.save()
                         newGameName = ""
+                        newGameIncrements = ScoreIncrementParser.defaultRaw
                         newGameTargetScore = ""
                         newGameMaxRounds = ""
+                        newGameTrackRounds = true
+                        newGameLowestWins = false
                         newGameCondensedView = true
+                        hideKeyboard()
                     }
-                    .disabled(newGameName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(newGameName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
                 Section("Saved Game Types (Tap to Edit)") {
@@ -1308,14 +1513,14 @@ struct SetupView: View {
                                     Text(game.name)
                                         .font(.headline)
                                     Spacer()
-                                    if let target = game.targetScore {
+                                    if let target = game.targetScore, target > 0 {
                                         Text("Win: \(target)")
                                             .font(.caption.bold())
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 2)
                                             .background(Color.blue.opacity(0.15), in: Capsule())
                                             .foregroundStyle(Color.blue)
-                                    } else if let maxR = game.maxRounds {
+                                    } else if let maxR = game.maxRounds, maxR > 0 {
                                         Text("\(maxR) Rounds")
                                             .font(.caption.bold())
                                             .padding(.horizontal, 8)
@@ -1335,12 +1540,23 @@ struct SetupView: View {
                         }
                     }
                     .onDelete { offsets in
-                        for i in offsets { context.delete(gameTypes[i]) }
+                        let snapshot = gameTypes
+                        let toDelete = offsets.compactMap { snapshot.indices.contains($0) ? snapshot[$0] : nil }
+                        for game in toDelete {
+                            context.delete(game)
+                        }
                         try? context.save()
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Setup")
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { hideKeyboard() }
+                }
+            }
         }
     }
 }
@@ -1351,24 +1567,30 @@ struct EditGameTypeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
+    @State private var didLoad = false
+    @State private var name: String = ""
+    @State private var useCondensedView: Bool = true
+    @State private var incrementsRaw: String = ScoreIncrementParser.defaultRaw
     @State private var targetScoreText: String = ""
     @State private var maxRoundsText: String = ""
+    @State private var trackRounds: Bool = true
+    @State private var lowestScoreWins: Bool = false
 
     var body: some View {
         Form {
             Section("Game Identity") {
-                TextField("Game Name", text: $gameType.name)
+                TextField("Game Name", text: $name)
             }
 
             Section("Scoring Configuration") {
-                Toggle("Condensed View (Hide + / - Buttons)", isOn: $gameType.useCondensedView)
+                Toggle("Condensed View (Hide + / - Buttons)", isOn: $useCondensedView)
 
-                if !gameType.useCondensedView {
+                if !useCondensedView {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Point Buttons (Comma-Separated)")
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
-                        TextField("e.g. 1, 5, 10, -1", text: $gameType.incrementsRaw)
+                        TextField("e.g. 1, 5, 10, -1", text: $incrementsRaw)
                     }
                 }
 
@@ -1390,35 +1612,54 @@ struct EditGameTypeView: View {
                         .frame(width: 110)
                 }
 
-                Toggle("Track Rounds & Ledger", isOn: $gameType.trackRounds)
-                Toggle("Lowest Score Wins", isOn: $gameType.lowestScoreWins)
+                Toggle("Track Rounds & Ledger", isOn: $trackRounds)
+                Toggle("Lowest Score Wins", isOn: $lowestScoreWins)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Edit Game Type")
         .onAppear {
-            if let target = gameType.targetScore {
-                targetScoreText = String(target)
-            }
-            if let maxR = gameType.maxRounds {
-                maxRoundsText = String(maxR)
-            }
+            guard !didLoad else { return }
+            didLoad = true
+            name = gameType.name
+            useCondensedView = gameType.useCondensedView
+            incrementsRaw = gameType.incrementsRaw
+            targetScoreText = gameType.targetScore.map(String.init) ?? ""
+            maxRoundsText = gameType.maxRounds.map(String.init) ?? ""
+            trackRounds = gameType.trackRounds
+            lowestScoreWins = gameType.lowestScoreWins
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    gameType.targetScore = Int(targetScoreText.trimmingCharacters(in: .whitespaces))
-                    gameType.maxRounds = Int(maxRoundsText.trimmingCharacters(in: .whitespaces))
+                    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+
+                    gameType.name = trimmed
+                    gameType.useCondensedView = useCondensedView
+                    gameType.incrementsRaw = incrementsRaw
+                    gameType.targetScore = ScoreMath.parsePositiveInt(targetScoreText)
+                    gameType.maxRounds = ScoreMath.parsePositiveInt(maxRoundsText)
+                    gameType.trackRounds = trackRounds
+                    gameType.lowestScoreWins = lowestScoreWins
 
                     for match in allMatches where match.gameTypeID == gameType.id {
-                        match.gameTypeName = gameType.name
-                        match.maxRounds = gameType.maxRounds
-                        match.useCondensedView = gameType.useCondensedView
+                        match.gameTypeName = trimmed
+                        if !match.isCompleted {
+                            match.maxRounds = gameType.maxRounds
+                            match.useCondensedView = gameType.useCondensedView
+                        }
                     }
                     try? context.save()
                     dismiss()
                 }
-                .disabled(gameType.name.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { hideKeyboard() }
             }
         }
     }
 }
+// END OF ContentView.swift
