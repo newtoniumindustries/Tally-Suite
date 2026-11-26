@@ -13,13 +13,14 @@ public struct RuleSection: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.headline)
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
             Text(content)
                 .font(.body)
                 .lineSpacing(4)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -40,5 +41,6 @@ public struct RuleRow: View {
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
     }
 }
