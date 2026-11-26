@@ -199,7 +199,7 @@ final class CountdownItem {
     var alertAtCompletion: Bool = true
     var alertLeadMinutes: Int = 0
     var colorToken: String = CountdownThemeColor.orange.rawValue
-    var symbolName: String = "hourglass"
+    var symbolName: String = "⏳"
     var isPinned: Bool = false
     var createdAt: Date = Date()
 
@@ -218,7 +218,7 @@ final class CountdownItem {
         alertAtCompletion: Bool = true,
         alertLeadMinutes: Int = 0,
         colorTheme: CountdownThemeColor = .orange,
-        symbolName: String = "hourglass",
+        symbolName: String = "⏳",
         isPinned: Bool = false,
         createdAt: Date = Date()
     ) {

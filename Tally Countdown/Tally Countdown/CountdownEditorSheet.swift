@@ -38,9 +38,18 @@ struct CountdownEditorSheet: View {
 
     // Appearance
     @State private var selectedColor: CountdownThemeColor = .orange
-    @State private var selectedSymbol: String = "hourglass"
+    @State private var selectedSymbol: String = CountdownIconCatalog.defaultIcon
+    @State private var showingMoreIconsSheet: Bool = false
 
     @State private var saveErrorMessage: String?
+
+    private var inlineIconOptions: [String] {
+        var options = CountdownIconCatalog.quickEmojis
+        if !options.contains(selectedSymbol) {
+            options.insert(selectedSymbol, at: 0)
+        }
+        return options
+    }
 
     private var trimmedTitle: String {
         title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -162,29 +171,49 @@ struct CountdownEditorSheet: View {
                     }
 
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(CountdownSymbol.all, id: \.self) { symbol in
-                                let isSelected = selectedSymbol == symbol
+                        HStack(spacing: 8) {
+                            ForEach(inlineIconOptions, id: \.self) { icon in
+                                let isSelected = selectedSymbol == icon
                                 Button {
-                                    selectedSymbol = symbol
+                                    selectedSymbol = icon
                                 } label: {
-                                    Image(systemName: symbol)
-                                        .font(.body.weight(.semibold))
-                                        .frame(width: 36, height: 36)
-                                        .background(
-                                            isSelected ? selectedColor.color.opacity(0.2) : Color(.tertiarySystemFill),
-                                            in: RoundedRectangle(cornerRadius: 8)
-                                        )
-                                        .foregroundStyle(isSelected ? selectedColor.color : .primary)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .stroke(isSelected ? selectedColor.color : Color.clear, lineWidth: 1.5)
-                                        )
+                                    Group {
+                                        if CountdownIconCatalog.isEmoji(icon) {
+                                            Text(icon)
+                                                .font(.title3)
+                                        } else {
+                                            Image(systemName: icon)
+                                                .font(.body.weight(.semibold))
+                                                .foregroundStyle(isSelected ? selectedColor.color : .primary)
+                                        }
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    .background(
+                                        isSelected ? selectedColor.color.opacity(0.22) : Color(.tertiarySystemFill),
+                                        in: RoundedRectangle(cornerRadius: 10)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(isSelected ? selectedColor.color : Color.clear, lineWidth: 2)
+                                    )
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel(symbol)
+                                .accessibilityLabel(icon)
                                 .accessibilityAddTraits(isSelected ? .isSelected : [])
                             }
+
+                            Button {
+                                showingMoreIconsSheet = true
+                            } label: {
+                                Label("More", systemImage: "ellipsis.circle")
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(.horizontal, 12)
+                                    .frame(height: 40)
+                                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
+                                    .foregroundStyle(selectedColor.color)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("More emojis and symbols")
                         }
                         .padding(.vertical, 4)
                     }
@@ -236,6 +265,12 @@ struct CountdownEditorSheet: View {
                     Spacer()
                     Button("Done") { TallyKeyboard.dismiss() }
                 }
+            }
+            .sheet(isPresented: $showingMoreIconsSheet) {
+                CountdownIconPickerSheet(
+                    selectedIcon: $selectedSymbol,
+                    tintColor: selectedColor.color
+                )
             }
             .alert(
                 "Could Not Save",

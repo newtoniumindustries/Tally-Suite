@@ -13,12 +13,7 @@ struct CountdownCardView: View {
 
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 12) {
-                Image(systemName: item.symbolName)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(themeColor)
-                    .frame(width: 40, height: 40)
-                    .background(themeColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-                    .accessibilityHidden(true)
+                CountdownBadgeIcon(icon: item.symbolName, tint: themeColor, size: 40, cornerRadius: 10)
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {

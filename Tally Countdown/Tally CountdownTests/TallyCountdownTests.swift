@@ -238,6 +238,20 @@ struct CountdownCalculatorTests {
 
         #expect(CountdownCalculator.formatLeadTime(minutes: 1500) == "1 day 1 hour")
     }
+
+    @Test("CountdownIconCatalog distinguishes emojis from SF Symbols and extracts custom emojis safely")
+    func iconCatalogEmojiDetection() {
+        #expect(CountdownIconCatalog.isEmoji("⏳"))
+        #expect(CountdownIconCatalog.isEmoji("🏖️"))
+        #expect(CountdownIconCatalog.isEmoji("🏋️‍♀️"))
+        #expect(!CountdownIconCatalog.isEmoji("hourglass"))
+        #expect(!CountdownIconCatalog.isEmoji("gift.fill"))
+        #expect(!CountdownIconCatalog.isEmoji(""))
+
+        #expect(CountdownIconCatalog.extractFirstEmoji(from: "🎉🥳") == "🎉")
+        #expect(CountdownIconCatalog.extractFirstEmoji(from: "Trip ✈️!") == "✈️")
+        #expect(CountdownIconCatalog.extractFirstEmoji(from: "abc123") == nil)
+    }
 }
 
 @Suite("Tally Countdown Persistence & Notification Scheduler Tests")

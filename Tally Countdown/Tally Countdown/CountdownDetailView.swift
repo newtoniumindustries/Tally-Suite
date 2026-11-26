@@ -106,12 +106,7 @@ struct CountdownDetailView: View {
     private func heroCard(snap: CountdownSnapshot, themeColor: Color) -> some View {
         VStack(spacing: 16) {
             HStack(spacing: 10) {
-                Image(systemName: item.symbolName)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(themeColor)
-                    .frame(width: 44, height: 44)
-                    .background(themeColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
-                    .accessibilityHidden(true)
+                CountdownBadgeIcon(icon: item.symbolName, tint: themeColor, size: 44, cornerRadius: 12)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.mode == .countdown ? "COUNTDOWN" : (snap.isUpcomingStart ? "UPCOMING COUNT UP" : "COUNT UP"))
