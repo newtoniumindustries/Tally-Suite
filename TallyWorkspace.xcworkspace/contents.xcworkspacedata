@@ -10,4 +10,7 @@
    <FileRef
       location = "group:Tally Canasta/Tally Canasta.xcodeproj">
    </FileRef>
+   <FileRef
+      location = "group:Tally Countdown/Tally Countdown.xcodeproj">
+   </FileRef>
 </Workspace>
