@@ -84,6 +84,38 @@ final class NotificationScheduler {
     ) async {
         cancelNotifications(for: item.id)
 
+        if item.mode == .streak {
+            guard let daily = CountdownCalculator.dailyReminder(for: item, at: now, calendar: calendar) else {
+                return
+            }
+            let authorized = await ensureAuthorization()
+            guard authorized else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = daily.title
+            content.body = daily.body
+            content.sound = .default
+
+            var components = DateComponents()
+            components.hour = daily.hour
+            components.minute = daily.minute
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            let request = UNNotificationRequest(
+                identifier: daily.identifier,
+                content: content,
+                trigger: trigger
+            )
+
+            do {
+                try await client.add(request)
+            } catch {
+                TallyLogger.ui.error(
+                    "Failed to schedule daily streak reminder \(daily.identifier, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                )
+            }
+            return
+        }
+
         let alerts = CountdownCalculator.scheduledAlerts(for: item, at: now, calendar: calendar)
         guard !alerts.isEmpty else { return }
 

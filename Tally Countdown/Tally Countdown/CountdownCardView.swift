@@ -4,6 +4,7 @@ import TallyCore
 struct CountdownCardView: View {
     let item: CountdownItem
     let now: Date
+    var onToggleStreakToday: (() -> Void)? = nil
 
     @ScaledMetric(relativeTo: .title2) private var primaryFontSize: CGFloat = 24
 
@@ -41,7 +42,7 @@ struct CountdownCardView: View {
                                 .foregroundStyle(.secondary)
                         }
 
-                        if item.alertsEnabled && (item.mode == .countdown || item.hasTargetDate) {
+                        if item.alertsEnabled && (item.mode != .countup || item.hasTargetDate) {
                             Image(systemName: "bell.fill")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -51,6 +52,30 @@ struct CountdownCardView: View {
                 }
 
                 Spacer(minLength: 4)
+
+                if let streak = snap.streak, let onToggle = onToggleStreakToday {
+                    let canCheckIn = !snap.isUpcomingStart
+                    Button {
+                        onToggle()
+                    } label: {
+                        Label(
+                            streak.isCompletedToday ? "Done" : "Check In",
+                            systemImage: streak.isCompletedToday ? "checkmark.circle.fill" : "circle"
+                        )
+                        .font(.caption.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            streak.isCompletedToday ? Color.green : themeColor.opacity(0.18),
+                            in: Capsule()
+                        )
+                        .foregroundStyle(streak.isCompletedToday ? Color.white : themeColor)
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(!canCheckIn)
+                    .sensoryFeedback(.success, trigger: streak.isCompletedToday)
+                    .accessibilityLabel(streak.isCompletedToday ? "Completed today for \(item.title), tap to undo" : "Check in today for \(item.title)")
+                }
             }
 
             HStack(alignment: .firstTextBaseline) {
@@ -70,9 +95,40 @@ struct CountdownCardView: View {
                     .lineLimit(1)
             }
 
+            if let streak = snap.streak {
+                HStack(spacing: 6) {
+                    ForEach(streak.recentSevenDays) { day in
+                        Circle()
+                            .fill(day.isCompleted ? themeColor : (day.isEditable ? Color(.tertiarySystemFill) : Color.clear))
+                            .frame(width: 10, height: 10)
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        day.isToday
+                                            ? themeColor
+                                            : (day.isEditable ? Color.secondary.opacity(0.25) : Color.secondary.opacity(0.12)),
+                                        lineWidth: day.isToday ? 1.5 : 1
+                                    )
+                            )
+                    }
+
+                    Spacer()
+
+                    Text("Best: \(streak.longestStreak)d")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             if let progress = snap.progress {
-                ProgressView(value: progress)
-                    .tint(snap.isComplete ? .green : themeColor)
+                HStack(spacing: 8) {
+                    ProgressView(value: progress)
+                        .tint(snap.isComplete ? .green : themeColor)
+
+                    Text(CountdownCalculator.formatProgressPercent(progress, isComplete: snap.isComplete))
+                        .font(.caption2.bold().monospacedDigit())
+                        .foregroundStyle(snap.isComplete ? Color.green : Color.secondary)
+                }
             }
 
             if !item.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -88,8 +144,7 @@ struct CountdownCardView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(snap.isComplete ? Color.green.opacity(0.6) : Color.clear, lineWidth: 1.5)
         )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilitySummary(for: snap))
+        .accessibilityElement(children: .contain)
     }
 
     private func dateSubtitle(for snap: CountdownSnapshot) -> String {
@@ -102,6 +157,11 @@ struct CountdownCardView: View {
                 return "Goal: \(formattedDate(target, isAllDay: snap.isAllDay))"
             }
             return "Since \(formattedDate(snap.effectiveStartDate, isAllDay: snap.isAllDay))"
+        case .streak:
+            if let end = snap.effectiveTargetDate {
+                return "Ends \(formattedDate(end, isAllDay: true))"
+            }
+            return "Open-ended"
         }
     }
 
@@ -110,16 +170,5 @@ struct CountdownCardView: View {
             return date.formatted(date: .abbreviated, time: .omitted)
         }
         return date.formatted(date: .abbreviated, time: .shortened)
-    }
-
-    private func accessibilitySummary(for snap: CountdownSnapshot) -> String {
-        var parts = [item.title, item.mode.displayName, snap.primaryHeadline, dateSubtitle(for: snap)]
-        if let repeatLabel = item.repeatRule.badgeLabel(customDays: item.customRepeatDays) {
-            parts.append("Repeats \(repeatLabel)")
-        }
-        if item.alertsEnabled {
-            parts.append("Alerts enabled")
-        }
-        return parts.filter { !$0.isEmpty }.joined(separator: ", ")
     }
 }

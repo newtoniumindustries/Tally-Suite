@@ -19,12 +19,12 @@ struct CountdownEditorSheet: View {
     @State private var targetDate: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date().addingTimeInterval(7 * 86_400)
     @State private var hasGoalTarget: Bool = true
 
-    // Quick duration helper (e.g., "20 days from today")
+    // Quick duration helper (e.g., "20 days from today" or "30-day streak")
     @State private var useDurationPicker: Bool = false
     @State private var durationAmountText: String = "20"
     @State private var durationUnit: DurationUnit = .days
 
-    // Repeat settings
+    // Repeat settings (Countdown & Count Up)
     @State private var repeatRule: RepeatRule = .none
     @State private var customRepeatDaysText: String = "7"
 
@@ -34,10 +34,11 @@ struct CountdownEditorSheet: View {
     @State private var leadPreset: AlertLeadPreset = .none
     @State private var customLeadAmountText: String = "2"
     @State private var customLeadUnit: DurationUnit = .hours
+    @State private var dailyReminderTime: Date = Calendar.current.date(bySettingHour: 20, minute: 0, second: 0, of: Date()) ?? Date()
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     // Appearance
-    @State private var selectedColor: CountdownThemeColor = .orange
+    @State private var selectedColor: CountdownThemeColor = .blue
     @State private var selectedSymbol: String = CountdownIconCatalog.defaultIcon
     @State private var showingMoreIconsSheet: Bool = false
 
@@ -55,8 +56,8 @@ struct CountdownEditorSheet: View {
         title.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var supportsTargetAndAlerts: Bool {
-        mode == .countdown || hasGoalTarget
+    private var supportsTargetAndRepeat: Bool {
+        mode == .countdown || (mode == .countup && hasGoalTarget)
     }
 
     private var parsedDurationAmount: Int? {
@@ -79,17 +80,31 @@ struct CountdownEditorSheet: View {
     }
 
     private var resolvedTargetDate: Date {
+        if mode == .streak {
+            let normStart = Calendar.current.startOfDay(for: startDate)
+            if useDurationPicker, let days = parsedDurationAmount {
+                // Inclusive day count: a 30-day streak starting Nov 1 ends on Nov 30 (+29 days)
+                return Calendar.current.date(byAdding: .day, value: max(0, days - 1), to: normStart) ?? normStart
+            }
+            return Calendar.current.startOfDay(for: targetDate)
+        }
+
         if useDurationPicker, let amount = parsedDurationAmount {
             let base = (mode == .countup) ? startDate : Date()
-            let minutes = TallyMath.multiply(amount, durationUnit.minutesMultiplier)
-            let computed = Calendar.current.date(byAdding: .minute, value: minutes, to: base) ?? base
-            return CountdownCalculator.normalizeDate(computed, isAllDay: isAllDay)
+            return CountdownCalculator.addDuration(
+                amount: amount,
+                unit: durationUnit,
+                to: base,
+                isAllDay: isAllDay
+            )
         }
         return CountdownCalculator.normalizeDate(targetDate, isAllDay: isAllDay)
     }
 
     private var durationValidationError: String? {
-        guard supportsTargetAndAlerts && useDurationPicker else { return nil }
+        let needsDuration = (mode == .countdown && useDurationPicker)
+            || ((mode == .countup || mode == .streak) && hasGoalTarget && useDurationPicker)
+        guard needsDuration else { return nil }
         if parsedDurationAmount == nil {
             return "Enter a whole number between 1 and 3,650."
         }
@@ -97,7 +112,7 @@ struct CountdownEditorSheet: View {
     }
 
     private var repeatValidationError: String? {
-        guard supportsTargetAndAlerts && repeatRule == .customDays else { return nil }
+        guard supportsTargetAndRepeat && repeatRule == .customDays else { return nil }
         if parsedCustomRepeatDays == nil {
             return "Enter a repeat interval between 1 and 3,650 days."
         }
@@ -105,7 +120,7 @@ struct CountdownEditorSheet: View {
     }
 
     private var leadValidationError: String? {
-        guard supportsTargetAndAlerts && alertsEnabled && leadPreset == .custom else { return nil }
+        guard mode != .streak && supportsTargetAndRepeat && alertsEnabled && leadPreset == .custom else { return nil }
         if TallyMath.parsePositiveInt(customLeadAmountText, max: 365_000) == nil {
             return "Enter a positive lead time value."
         }
@@ -113,7 +128,7 @@ struct CountdownEditorSheet: View {
     }
 
     private var alertsConfigurationWarning: String? {
-        guard supportsTargetAndAlerts && alertsEnabled else { return nil }
+        guard mode != .streak && supportsTargetAndRepeat && alertsEnabled else { return nil }
         if !alertAtCompletion && computedLeadMinutes == 0 {
             return "Turn on \"Alert When Reached\" or pick a lead-time reminder."
         }
@@ -121,10 +136,15 @@ struct CountdownEditorSheet: View {
     }
 
     private var targetBeforeStartError: String? {
-        guard mode == .countup && hasGoalTarget && !useDurationPicker else { return nil }
-        let normStart = CountdownCalculator.normalizeDate(startDate, isAllDay: isAllDay)
-        let normTarget = CountdownCalculator.normalizeDate(targetDate, isAllDay: isAllDay)
-        if normTarget <= normStart {
+        guard (mode == .countup || mode == .streak) && hasGoalTarget && !useDurationPicker else { return nil }
+        let effectiveAllDay = (mode == .streak) ? true : isAllDay
+        let normStart = CountdownCalculator.normalizeDate(startDate, isAllDay: effectiveAllDay)
+        let normTarget = CountdownCalculator.normalizeDate(targetDate, isAllDay: effectiveAllDay)
+        if mode == .streak {
+            if normTarget < normStart {
+                return "End date must be on or after the start date."
+            }
+        } else if normTarget <= normStart {
             return "Goal date must be after the start date."
         }
         return nil
@@ -143,7 +163,7 @@ struct CountdownEditorSheet: View {
         NavigationStack {
             Form {
                 Section("Name & Style") {
-                    TextField("Name (e.g. Vacation, 20-Day Streak)", text: $title)
+                    TextField(namePlaceholder, text: $title)
                     TextField("Notes (Optional)", text: $notes)
 
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -227,19 +247,37 @@ struct CountdownEditorSheet: View {
                     }
                     .pickerStyle(.segmented)
                     .onChange(of: mode) { _, newMode in
-                        if newMode == .countup && editingItem == nil {
-                            // Default new countup to "20 days from today" duration entry for fast setup
+                        guard editingItem == nil else { return }
+                        switch newMode {
+                        case .countdown:
+                            hasGoalTarget = true
+                            useDurationPicker = false
+                        case .countup:
                             hasGoalTarget = true
                             useDurationPicker = true
+                            durationAmountText = "20"
+                            durationUnit = .days
+                        case .streak:
+                            hasGoalTarget = false
+                            useDurationPicker = true
+                            durationAmountText = "30"
+                            durationUnit = .days
+                            if selectedSymbol == CountdownIconCatalog.defaultIcon {
+                                selectedSymbol = "🔥"
+                            }
                         }
                     }
 
-                    Toggle("All Day (Date Only)", isOn: $isAllDay)
+                    if mode != .streak {
+                        Toggle("All Day (Date Only)", isOn: $isAllDay)
+                    }
                 }
 
                 scheduleSection
 
-                if supportsTargetAndAlerts {
+                if mode == .streak {
+                    streakDailyAlertSection
+                } else if supportsTargetAndRepeat {
                     repeatSection
                     alertsSection
                 }
@@ -286,11 +324,20 @@ struct CountdownEditorSheet: View {
         }
     }
 
+    private var namePlaceholder: String {
+        switch mode {
+        case .countdown: return "Name (e.g. Vacation, Launch Day)"
+        case .countup: return "Name (e.g. 20-Day Challenge)"
+        case .streak: return "Name (e.g. Daily Workout, Read 20 Min)"
+        }
+    }
+
     @ViewBuilder
     private var scheduleSection: some View {
         let components: DatePickerComponents = isAllDay ? [.date] : [.date, .hourAndMinute]
 
-        if mode == .countdown {
+        switch mode {
+        case .countdown:
             Section(
                 header: Text("Target Date"),
                 footer: Text(useDurationPicker
@@ -304,7 +351,7 @@ struct CountdownEditorSheet: View {
                 .pickerStyle(.segmented)
 
                 if useDurationPicker {
-                    durationInputRow
+                    durationInputRow(daysOnly: isAllDay)
                     if let error = durationValidationError {
                         Text(error)
                             .font(.caption)
@@ -314,7 +361,8 @@ struct CountdownEditorSheet: View {
                     DatePicker("Target", selection: $targetDate, displayedComponents: components)
                 }
             }
-        } else {
+
+        case .countup:
             Section(
                 header: Text("Count Up Schedule"),
                 footer: Text(hasGoalTarget
@@ -324,6 +372,16 @@ struct CountdownEditorSheet: View {
                 DatePicker("Start Date", selection: $startDate, displayedComponents: components)
 
                 Toggle("Set Goal (e.g. 20 Days)", isOn: $hasGoalTarget)
+                    .onChange(of: hasGoalTarget) { _, enabled in
+                        if enabled && targetDate <= startDate {
+                            targetDate = CountdownCalculator.addDuration(
+                                amount: parsedDurationAmount ?? 20,
+                                unit: .days,
+                                to: startDate,
+                                isAllDay: isAllDay
+                            )
+                        }
+                    }
 
                 if hasGoalTarget {
                     Picker("Goal Type", selection: $useDurationPicker) {
@@ -333,7 +391,7 @@ struct CountdownEditorSheet: View {
                     .pickerStyle(.segmented)
 
                     if useDurationPicker {
-                        durationInputRow
+                        durationInputRow(daysOnly: isAllDay)
                         if let error = durationValidationError {
                             Text(error)
                                 .font(.caption)
@@ -349,28 +407,99 @@ struct CountdownEditorSheet: View {
                     }
                 }
             }
+
+        case .streak:
+            Section(
+                header: Text("Streak Schedule"),
+                footer: Text(hasGoalTarget
+                    ? "Goal ends on \(resolvedTargetDate.formatted(date: .abbreviated, time: .omitted)). Consecutive check-in progress resets if a day is missed."
+                    : "Open-ended daily streak. Check in every day and backfill missed past days anytime.")
+            ) {
+                DatePicker("Start Date", selection: $startDate, displayedComponents: [.date])
+
+                Toggle("Set End Goal (Optional)", isOn: $hasGoalTarget)
+                    .onChange(of: hasGoalTarget) { _, enabled in
+                        if enabled && Calendar.current.startOfDay(for: targetDate) < Calendar.current.startOfDay(for: startDate) {
+                            targetDate = Calendar.current.date(byAdding: .day, value: 29, to: Calendar.current.startOfDay(for: startDate)) ?? startDate
+                        }
+                    }
+
+                if hasGoalTarget {
+                    Picker("Goal Type", selection: $useDurationPicker) {
+                        Text("Goal Days").tag(true)
+                        Text("Pick End Date").tag(false)
+                    }
+                    .pickerStyle(.segmented)
+
+                    if useDurationPicker {
+                        durationInputRow(daysOnly: true)
+                        if let error = durationValidationError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    } else {
+                        DatePicker("End Date", selection: $targetDate, displayedComponents: [.date])
+                        if let error = targetBeforeStartError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+            }
         }
     }
 
-    private var durationInputRow: some View {
+    private func durationInputRow(daysOnly: Bool) -> some View {
         HStack {
-            Text("Length")
+            Text(mode == .streak ? "Goal Length" : "Length")
             Spacer()
-            TextField("20", text: $durationAmountText)
+            TextField(mode == .streak ? "30" : "20", text: $durationAmountText)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .textFieldStyle(.roundedBorder)
                 .frame(minWidth: 64, maxWidth: 84)
                 .accessibilityLabel("Duration amount")
 
-            Picker("Unit", selection: $durationUnit) {
-                ForEach(isAllDay ? [DurationUnit.days] : DurationUnit.allCases) { unit in
-                    Text(unit.displayName).tag(unit)
+            if daysOnly {
+                Text("Days")
+                    .foregroundStyle(.secondary)
+            } else {
+                Picker("Unit", selection: $durationUnit) {
+                    ForEach(DurationUnit.allCases) { unit in
+                        Text(unit.displayName).tag(unit)
+                    }
                 }
+                .labelsHidden()
             }
-            .labelsHidden()
-            .onChange(of: isAllDay) { _, allDay in
-                if allDay { durationUnit = .days }
+        }
+        .onChange(of: daysOnly) { _, restricted in
+            if restricted { durationUnit = .days }
+        }
+    }
+
+    private var streakDailyAlertSection: some View {
+        Section(
+            header: Text("Daily Reminder"),
+            footer: Text("Receive a daily notification reminding you to check in and keep your streak alive.")
+        ) {
+            Toggle("Daily Reminder Alert", isOn: $alertsEnabled)
+                .onChange(of: alertsEnabled) { _, enabled in
+                    if enabled {
+                        Task {
+                            _ = await NotificationScheduler.shared.ensureAuthorization()
+                            notificationStatus = await NotificationScheduler.shared.authorizationStatus()
+                        }
+                    }
+                }
+
+            if alertsEnabled {
+                if notificationStatus == .denied {
+                    notificationDeniedBanner
+                }
+
+                DatePicker("Reminder Time", selection: $dailyReminderTime, displayedComponents: [.hourAndMinute])
             }
         }
     }
@@ -423,17 +552,7 @@ struct CountdownEditorSheet: View {
 
             if alertsEnabled {
                 if notificationStatus == .denied {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Label("Notifications are turned off in iOS Settings.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption.bold())
-                            .foregroundStyle(.orange)
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
-                            }
-                        }
-                        .font(.caption.bold())
-                    }
+                    notificationDeniedBanner
                 }
 
                 Toggle("Alert When Reached", isOn: $alertAtCompletion)
@@ -479,6 +598,20 @@ struct CountdownEditorSheet: View {
         }
     }
 
+    private var notificationDeniedBanner: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Notifications are turned off in iOS Settings.", systemImage: "exclamationmark.triangle.fill")
+                .font(.caption.bold())
+                .foregroundStyle(.orange)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .font(.caption.bold())
+        }
+    }
+
     private func loadInitialState() {
         guard !didLoad else { return }
         didLoad = true
@@ -498,6 +631,12 @@ struct CountdownEditorSheet: View {
         alertAtCompletion = item.alertAtCompletion
         selectedColor = item.colorTheme
         selectedSymbol = item.symbolName
+        dailyReminderTime = Calendar.current.date(
+            bySettingHour: item.dailyReminderHour,
+            minute: item.dailyReminderMinute,
+            second: 0,
+            of: Date()
+        ) ?? Date()
 
         leadPreset = AlertLeadPreset.from(minutes: item.alertLeadMinutes)
         if leadPreset == .custom {
@@ -519,25 +658,29 @@ struct CountdownEditorSheet: View {
         TallyKeyboard.dismiss()
 
         let now = Date()
+        let finalAllDay = (mode == .streak) ? true : isAllDay
         let finalHasTarget = (mode == .countdown) ? true : hasGoalTarget
         let finalStart: Date
         if mode == .countdown {
-            finalStart = editingItem?.startDate ?? CountdownCalculator.normalizeDate(now, isAllDay: isAllDay)
+            finalStart = editingItem?.startDate ?? CountdownCalculator.normalizeDate(now, isAllDay: finalAllDay)
         } else {
-            finalStart = CountdownCalculator.normalizeDate(startDate, isAllDay: isAllDay)
+            finalStart = CountdownCalculator.normalizeDate(startDate, isAllDay: finalAllDay)
         }
         let finalTarget = finalHasTarget ? resolvedTargetDate : finalStart
-        let finalRepeatRule = finalHasTarget ? repeatRule : .none
+        let finalRepeatRule = (mode == .streak || !finalHasTarget) ? .none : repeatRule
         let finalCustomDays = parsedCustomRepeatDays ?? 7
-        let finalAlertsEnabled = finalHasTarget && alertsEnabled
-        let finalLeadMinutes = finalAlertsEnabled ? computedLeadMinutes : 0
+        let finalAlertsEnabled = (mode == .streak || finalHasTarget) && alertsEnabled
+        let finalLeadMinutes = (mode != .streak && finalAlertsEnabled) ? computedLeadMinutes : 0
+        let reminderComps = Calendar.current.dateComponents([.hour, .minute], from: dailyReminderTime)
+        let finalReminderHour = reminderComps.hour ?? 20
+        let finalReminderMinute = reminderComps.minute ?? 0
 
         let savedItem: CountdownItem
         if let existing = editingItem {
             existing.title = trimmedTitle
             existing.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.mode = mode
-            existing.isAllDay = isAllDay
+            existing.isAllDay = finalAllDay
             existing.startDate = finalStart
             existing.targetDate = finalTarget
             existing.hasTargetDate = finalHasTarget
@@ -546,6 +689,8 @@ struct CountdownEditorSheet: View {
             existing.alertsEnabled = finalAlertsEnabled
             existing.alertAtCompletion = alertAtCompletion
             existing.alertLeadMinutes = finalLeadMinutes
+            existing.dailyReminderHour = finalReminderHour
+            existing.dailyReminderMinute = finalReminderMinute
             existing.colorTheme = selectedColor
             existing.symbolName = selectedSymbol
             savedItem = existing
@@ -557,12 +702,15 @@ struct CountdownEditorSheet: View {
                 startDate: finalStart,
                 targetDate: finalTarget,
                 hasTargetDate: finalHasTarget,
-                isAllDay: isAllDay,
+                isAllDay: finalAllDay,
                 repeatRule: finalRepeatRule,
                 customRepeatDays: finalCustomDays,
                 alertsEnabled: finalAlertsEnabled,
                 alertAtCompletion: alertAtCompletion,
                 alertLeadMinutes: finalLeadMinutes,
+                completedDayKeys: [],
+                dailyReminderHour: finalReminderHour,
+                dailyReminderMinute: finalReminderMinute,
                 colorTheme: selectedColor,
                 symbolName: selectedSymbol
             )

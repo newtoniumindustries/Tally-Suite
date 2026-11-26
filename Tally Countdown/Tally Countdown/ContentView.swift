@@ -6,6 +6,7 @@ private enum CountdownFilter: String, CaseIterable, Identifiable {
     case all = "All"
     case countdowns = "Countdowns"
     case countups = "Count Ups"
+    case streaks = "Streaks"
     case repeating = "Repeating"
 
     var id: String { rawValue }
@@ -48,9 +49,9 @@ struct ContentView: View {
 
                     if items.isEmpty {
                         ContentUnavailableView(
-                            "No Countdowns Yet",
-                            systemImage: "hourglass",
-                            description: Text("Tap + to create a countdown to an upcoming date or a count up from today.")
+                            "No Timers Yet",
+                            systemImage: "calendar.badge.clock",
+                            description: Text("Tap + to create a countdown, count up, or daily streak.")
                         )
                     } else if filtered.isEmpty {
                         ContentUnavailableView(
@@ -103,7 +104,7 @@ struct ContentView: View {
                     Button {
                         showingNewEditor = true
                     } label: {
-                        Label("New Countdown", systemImage: "plus.circle.fill")
+                        Label("New Timer", systemImage: "plus.circle.fill")
                     }
                 }
             }
@@ -188,7 +189,13 @@ struct ContentView: View {
     private func sectionRows(_ sectionItems: [CountdownItem], now: Date) -> some View {
         ForEach(sectionItems) { item in
             NavigationLink(value: item) {
-                CountdownCardView(item: item, now: now)
+                CountdownCardView(
+                    item: item,
+                    now: now,
+                    onToggleStreakToday: item.mode == .streak ? {
+                        toggleStreakToday(item, now: now)
+                    } : nil
+                )
             }
             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
             .listRowBackground(Color.clear)
@@ -216,6 +223,18 @@ struct ContentView: View {
                 .tint(.blue)
             }
             .contextMenu {
+                if item.mode == .streak {
+                    let completedToday = item.isCompleted(on: now)
+                    Button {
+                        toggleStreakToday(item, now: now)
+                    } label: {
+                        Label(
+                            completedToday ? "Undo Today's Check-In" : "Check In Today",
+                            systemImage: completedToday ? "xmark.circle" : "checkmark.circle.fill"
+                        )
+                    }
+                }
+
                 Button {
                     togglePin(item)
                 } label: {
@@ -254,6 +273,8 @@ struct ContentView: View {
                 return item.mode == .countdown
             case .countups:
                 return item.mode == .countup
+            case .streaks:
+                return item.mode == .streak
             case .repeating:
                 return item.repeatRule != .none
             }
@@ -279,6 +300,17 @@ struct ContentView: View {
             case .newest:
                 return lhs.createdAt > rhs.createdAt
             }
+        }
+    }
+
+    private func toggleStreakToday(_ item: CountdownItem, now: Date) {
+        guard item.toggleCompletion(on: now, now: now) else { return }
+        if let error = context.saveReportingError() {
+            saveErrorMessage = error
+            return
+        }
+        Task {
+            await NotificationScheduler.shared.syncNotifications(for: item, now: now)
         }
     }
 

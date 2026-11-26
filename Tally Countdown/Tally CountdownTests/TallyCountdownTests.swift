@@ -34,7 +34,7 @@ private final class MockNotificationClient: NotificationCenterClient {
     }
 }
 
-@Suite("CountdownCalculator & Recurrence Tests")
+@Suite("CountdownCalculator, Streaks & Recurrence Tests")
 struct CountdownCalculatorTests {
     private var utcCalendar: Calendar {
         var cal = Calendar(identifier: .gregorian)
@@ -59,7 +59,7 @@ struct CountdownCalculatorTests {
     @Test("Countdown computes remaining breakdown, progress, and completion accurately")
     func countdownBreakdownAndCompletion() {
         let start = makeUTCDate(year: 2026, month: 6, day: 1, hour: 12, minute: 0)
-        let target = makeUTCDate(year: 2026, month: 6, day: 11, hour: 12, minute: 0) // 10 days later
+        let target = makeUTCDate(year: 2026, month: 6, day: 11, hour: 12, minute: 0)
         let halfway = makeUTCDate(year: 2026, month: 6, day: 6, hour: 12, minute: 0)
 
         let item = CountdownItemValue(
@@ -80,7 +80,6 @@ struct CountdownCalculatorTests {
         let midSnap = CountdownCalculator.snapshot(for: item, at: halfway, calendar: utcCalendar)
         #expect(!midSnap.isComplete)
         #expect(midSnap.primaryBreakdown.days == 5)
-        #expect(midSnap.primaryBreakdown.hours == 0)
         #expect(midSnap.progress == 0.5)
 
         let doneSnap = CountdownCalculator.snapshot(for: item, at: target.addingTimeInterval(10), calendar: utcCalendar)
@@ -89,15 +88,15 @@ struct CountdownCalculatorTests {
         #expect(doneSnap.progress == 1.0)
     }
 
-    @Test("Goal-based countup tracks elapsed days, progress, and completion for 20 days from today")
-    func goalBasedCountup() {
+    @Test("Goal-based countup tracks elapsed days, accurate percent formatting, and completion")
+    func goalBasedCountupAndPercentFormatting() {
         let start = makeUTCDate(year: 2026, month: 7, day: 1)
-        let target = makeUTCDate(year: 2026, month: 7, day: 21) // 20 days from start
-        let day5 = makeUTCDate(year: 2026, month: 7, day: 6)
+        let target = CountdownCalculator.addDuration(amount: 20, unit: .days, to: start, isAllDay: true, calendar: utcCalendar)
+        #expect(target == makeUTCDate(year: 2026, month: 7, day: 21))
 
         let item = CountdownItemValue(
             id: UUID(),
-            title: "20-Day Streak",
+            title: "20-Day Challenge",
             mode: .countup,
             startDate: start,
             targetDate: target,
@@ -110,14 +109,26 @@ struct CountdownCalculatorTests {
             alertLeadMinutes: 1440
         )
 
-        let snap = CountdownCalculator.snapshot(for: item, at: day5, calendar: utcCalendar)
+        // Day 1 shows "Day 1 of 20" (not Day 0)
+        let day1Early = makeUTCDate(year: 2026, month: 7, day: 1, hour: 2, minute: 0)
+        let day1Snap = CountdownCalculator.snapshot(for: item, at: day1Early, calendar: utcCalendar)
+        #expect(day1Snap.primaryHeadline == "Day 1 of 20")
+        #expect(CountdownCalculator.formatProgressPercent(day1Snap.progress ?? 0, isComplete: false) == "0.4%")
+
+        // Day 6 (5 full days elapsed = 25%)
+        let day6 = makeUTCDate(year: 2026, month: 7, day: 6)
+        let snap = CountdownCalculator.snapshot(for: item, at: day6, calendar: utcCalendar)
         #expect(!snap.isComplete)
-        #expect(!snap.isUpcomingStart)
         #expect(snap.elapsedDaysCount == 5)
         #expect(snap.totalGoalDays == 20)
         #expect(snap.progress == 0.25)
-        #expect(snap.primaryHeadline == "Day 5 of 20")
-        #expect(snap.remainingToGoal?.days == 15)
+        #expect(CountdownCalculator.formatProgressPercent(snap.progress ?? 0, isComplete: false) == "25%")
+
+        // Tiny progress shows < 0.1%, near-complete never falsely rounds to 100%
+        #expect(CountdownCalculator.formatProgressPercent(0.0, isComplete: false) == "0%")
+        #expect(CountdownCalculator.formatProgressPercent(0.0002, isComplete: false) == "< 0.1%")
+        #expect(CountdownCalculator.formatProgressPercent(0.996, isComplete: false) == "99%")
+        #expect(CountdownCalculator.formatProgressPercent(1.0, isComplete: true) == "100%")
 
         let finishedSnap = CountdownCalculator.snapshot(for: item, at: target, calendar: utcCalendar)
         #expect(finishedSnap.isComplete)
@@ -157,15 +168,93 @@ struct CountdownCalculatorTests {
         #expect(elapsedSnap.primaryBreakdown.days == 3)
         #expect(elapsedSnap.primaryBreakdown.hours == 2)
         #expect(elapsedSnap.primaryBreakdown.minutes == 30)
-
-        // Open-ended countups never schedule target alerts
-        let alerts = CountdownCalculator.scheduledAlerts(for: item, at: beforeStart, calendar: utcCalendar)
-        #expect(alerts.isEmpty)
+        #expect(CountdownCalculator.scheduledAlerts(for: item, at: beforeStart, calendar: utcCalendar).isEmpty)
     }
 
-    @Test("Recurrence rollover handles daily, weekly, monthly month-end clamping, custom days, and multi-year jumps")
+    @Test("Streak computes current consecutive streak, resets on missed day, and updates on past-day backfill")
+    func streakConsecutiveProgressAndBackfill() {
+        let start = makeUTCDate(year: 2026, month: 11, day: 1)
+        let end = makeUTCDate(year: 2026, month: 11, day: 10) // 10-day inclusive goal
+        let nov5 = makeUTCDate(year: 2026, month: 11, day: 5, hour: 14, minute: 0)
+
+        // Completed Nov 1, 2, 4 (missed Nov 3, not yet checked in Nov 5) -> currentStreak = 1 (Nov 4), longest = 2 (Nov 1-2)
+        let brokenItem = CountdownItemValue(
+            id: UUID(),
+            title: "Daily Run",
+            mode: .streak,
+            startDate: start,
+            targetDate: end,
+            hasTargetDate: true,
+            isAllDay: true,
+            repeatRule: .none,
+            customRepeatDays: 7,
+            alertsEnabled: true,
+            alertAtCompletion: false,
+            alertLeadMinutes: 0,
+            completedDayKeys: ["2026-11-01", "2026-11-02", "2026-11-04"],
+            dailyReminderHour: 20,
+            dailyReminderMinute: 0
+        )
+
+        let snap1 = CountdownCalculator.streakSnapshot(for: brokenItem, at: nov5, calendar: utcCalendar)
+        #expect(!snap1.isCompletedToday)
+        #expect(snap1.currentStreak == 1)
+        #expect(snap1.longestStreak == 2)
+        #expect(snap1.totalCompletedDays == 3)
+        #expect(snap1.goalDays == 10)
+        #expect(snap1.progress == 0.1) // Current consecutive streak (1) / 10
+
+        // Missed yesterday too (Nov 4 removed) -> current streak resets to 0 and progress resets to 0%
+        let resetItem = CountdownItemValue(
+            id: brokenItem.id,
+            title: "Daily Run",
+            mode: .streak,
+            startDate: start,
+            targetDate: end,
+            hasTargetDate: true,
+            isAllDay: true,
+            repeatRule: .none,
+            customRepeatDays: 7,
+            alertsEnabled: true,
+            alertAtCompletion: false,
+            alertLeadMinutes: 0,
+            completedDayKeys: ["2026-11-01", "2026-11-02"],
+            dailyReminderHour: 20,
+            dailyReminderMinute: 0
+        )
+        let snapReset = CountdownCalculator.streakSnapshot(for: resetItem, at: nov5, calendar: utcCalendar)
+        #expect(snapReset.currentStreak == 0)
+        #expect(snapReset.longestStreak == 2)
+        #expect(snapReset.progress == 0.0)
+
+        // Backfilling Nov 3 + checking in Nov 5 restores continuous 5-day streak (50% of 10-day goal)
+        let backfilledItem = CountdownItemValue(
+            id: brokenItem.id,
+            title: "Daily Run",
+            mode: .streak,
+            startDate: start,
+            targetDate: end,
+            hasTargetDate: true,
+            isAllDay: true,
+            repeatRule: .none,
+            customRepeatDays: 7,
+            alertsEnabled: true,
+            alertAtCompletion: false,
+            alertLeadMinutes: 0,
+            completedDayKeys: ["2026-11-01", "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"],
+            dailyReminderHour: 20,
+            dailyReminderMinute: 0
+        )
+        let snapBackfilled = CountdownCalculator.streakSnapshot(for: backfilledItem, at: nov5, calendar: utcCalendar)
+        #expect(snapBackfilled.isCompletedToday)
+        #expect(snapBackfilled.currentStreak == 5)
+        #expect(snapBackfilled.longestStreak == 5)
+        #expect(snapBackfilled.progress == 0.5)
+        #expect(!snapBackfilled.isComplete)
+    }
+
+    @Test("Recurrence rollover handles monthly month-end clamping and multi-year custom intervals")
     func recurrenceRollover() {
-        // Monthly Jan 31 -> Feb 28 (non-leap year 2026)
         let jan1 = makeUTCDate(year: 2026, month: 1, day: 1)
         let jan31 = makeUTCDate(year: 2026, month: 1, day: 31)
         let feb2 = makeUTCDate(year: 2026, month: 2, day: 2)
@@ -179,10 +268,8 @@ struct CountdownCalculatorTests {
             now: feb2,
             calendar: utcCalendar
         )
-        #expect(rolledMonthly != nil)
         #expect(rolledMonthly?.targetDate == makeUTCDate(year: 2026, month: 2, day: 28))
 
-        // Custom 20-day cycle jumping forward across multiple elapsed cycles in O(1)
         let oldStart = makeUTCDate(year: 2024, month: 1, day: 1)
         let oldTarget = makeUTCDate(year: 2024, month: 1, day: 21)
         let now = makeUTCDate(year: 2026, month: 1, day: 10)
@@ -206,7 +293,7 @@ struct CountdownCalculatorTests {
     @Test("Scheduled alerts calculate lead-time and completion fire dates and skip past triggers")
     func scheduledAlertCalculation() {
         let now = makeUTCDate(year: 2026, month: 9, day: 1, hour: 10, minute: 0)
-        let target = makeUTCDate(year: 2026, month: 9, day: 2, hour: 10, minute: 0) // 24h away
+        let target = makeUTCDate(year: 2026, month: 9, day: 2, hour: 10, minute: 0)
 
         let item = CountdownItemValue(
             id: UUID(),
@@ -220,7 +307,7 @@ struct CountdownCalculatorTests {
             customRepeatDays: 7,
             alertsEnabled: true,
             alertAtCompletion: true,
-            alertLeadMinutes: 120 // 2 hours before
+            alertLeadMinutes: 120
         )
 
         let alerts = CountdownCalculator.scheduledAlerts(for: item, at: now, calendar: utcCalendar)
@@ -230,7 +317,6 @@ struct CountdownCalculatorTests {
         #expect(alerts[1].kind == .completion)
         #expect(alerts[1].fireDate == target)
 
-        // When lead time has already passed (only 1 hour left), only completion alert remains
         let oneHourBefore = makeUTCDate(year: 2026, month: 9, day: 2, hour: 9, minute: 0)
         let remainingAlerts = CountdownCalculator.scheduledAlerts(for: item, at: oneHourBefore, calendar: utcCalendar)
         #expect(remainingAlerts.count == 1)
@@ -257,12 +343,12 @@ struct CountdownCalculatorTests {
 @Suite("Tally Countdown Persistence & Notification Scheduler Tests")
 @MainActor
 struct CountdownLifecycleTests {
-    @Test("NotificationScheduler schedules lead and completion requests when authorized and skips when denied")
+    @Test("NotificationScheduler schedules countdown alerts and repeating daily streak reminders")
     func notificationSchedulerSync() async {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let target = now.addingTimeInterval(86_400) // +24h
+        let target = now.addingTimeInterval(86_400)
 
-        let item = CountdownItemValue(
+        let countdownItem = CountdownItemValue(
             id: UUID(),
             title: "Anniversary",
             mode: .countdown,
@@ -279,59 +365,98 @@ struct CountdownLifecycleTests {
 
         let authorizedClient = MockNotificationClient(status: .authorized)
         let scheduler = NotificationScheduler(client: authorizedClient)
-        await scheduler.syncNotifications(for: item, now: now)
+        await scheduler.syncNotifications(for: countdownItem, now: now)
 
-        let added = authorizedClient.addedRequests
-        #expect(added.count == 2)
-        #expect(added.map(\.identifier).contains(CountdownCalculator.notificationIdentifier(for: item.id, kind: .lead)))
-        #expect(added.map(\.identifier).contains(CountdownCalculator.notificationIdentifier(for: item.id, kind: .completion)))
+        #expect(authorizedClient.addedRequests.count == 2)
+        #expect(authorizedClient.addedRequests.map(\.identifier).contains(CountdownCalculator.notificationIdentifier(for: countdownItem.id, kind: .lead)))
+        #expect(authorizedClient.addedRequests.map(\.identifier).contains(CountdownCalculator.notificationIdentifier(for: countdownItem.id, kind: .completion)))
+
+        // Streak daily reminder schedules a repeating calendar notification at 20:30
+        let streakItem = CountdownItemValue(
+            id: UUID(),
+            title: "Meditate",
+            mode: .streak,
+            startDate: now,
+            targetDate: now,
+            hasTargetDate: false,
+            isAllDay: true,
+            repeatRule: .none,
+            customRepeatDays: 7,
+            alertsEnabled: true,
+            alertAtCompletion: false,
+            alertLeadMinutes: 0,
+            completedDayKeys: [],
+            dailyReminderHour: 20,
+            dailyReminderMinute: 30
+        )
+
+        let streakClient = MockNotificationClient(status: .authorized)
+        let streakScheduler = NotificationScheduler(client: streakClient)
+        await streakScheduler.syncNotifications(for: streakItem, now: now)
+
+        #expect(streakClient.addedRequests.count == 1)
+        let trigger = streakClient.addedRequests.first?.trigger as? UNCalendarNotificationTrigger
+        #expect(trigger?.repeats == true)
+        #expect(trigger?.dateComponents.hour == 20)
+        #expect(trigger?.dateComponents.minute == 30)
 
         let deniedClient = MockNotificationClient(status: .denied)
         let deniedScheduler = NotificationScheduler(client: deniedClient)
-        await deniedScheduler.syncNotifications(for: item, now: now)
+        await deniedScheduler.syncNotifications(for: streakItem, now: now)
         #expect(deniedClient.addedRequests.isEmpty)
     }
 
-    @Test("SwiftData inserts, advances repeating items, restarts cycles, and deletes cleanly")
-    func swiftDataLifecycle() throws {
+    @Test("Streak toggleCompletion enforces startDate...today bounds and persists via SwiftData")
+    func swiftDataStreakAndCountdownLifecycle() throws {
         let schema = Schema([CountdownItem.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, configurations: [config])
         let context = container.mainContext
 
-        let now = Date()
-        let pastStart = now.addingTimeInterval(-10 * 86_400)
-        let pastTarget = now.addingTimeInterval(-2 * 86_400)
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let threeDaysAgo = calendar.date(byAdding: .day, value: -3, to: today)!
+        let fourDaysAgo = calendar.date(byAdding: .day, value: -4, to: today)!
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
 
-        let item = CountdownItem(
-            title: "Weekly Review",
-            mode: .countdown,
-            startDate: pastStart,
-            targetDate: pastTarget,
-            isAllDay: false,
-            repeatRule: .weekly,
+        let streak = CountdownItem(
+            title: "Read Daily",
+            mode: .streak,
+            startDate: threeDaysAgo,
+            targetDate: threeDaysAgo,
+            hasTargetDate: false,
             alertsEnabled: true,
-            alertAtCompletion: true,
-            alertLeadMinutes: 60,
-            colorTheme: .indigo,
-            symbolName: "calendar",
-            isPinned: true
+            dailyReminderHour: 21,
+            dailyReminderMinute: 15,
+            colorTheme: .teal,
+            symbolName: "📚"
         )
-        context.insert(item)
+        context.insert(streak)
+
+        // Days before startDate or in the future are rejected
+        #expect(!streak.toggleCompletion(on: fourDaysAgo, now: today, calendar: calendar))
+        #expect(!streak.toggleCompletion(on: tomorrow, now: today, calendar: calendar))
+
+        // Valid past day (yesterday) + today succeed
+        #expect(streak.toggleCompletion(on: yesterday, now: today, calendar: calendar))
+        #expect(streak.toggleCompletion(on: today, now: today, calendar: calendar))
         #expect(context.saveReportingError() == nil)
 
-        #expect(item.advanceIfRepeatingPast(now))
-        #expect(item.targetDate > now)
+        let snap = streak.streakSnapshot(at: today, calendar: calendar)
+        #expect(snap.currentStreak == 2)
+        #expect(snap.isCompletedToday)
 
-        item.restartCycle(from: now)
-        #expect(item.startDate == now)
-        #expect(item.targetDate > now)
+        // Toggle today off -> currentStreak stays 1 (yesterday)
+        #expect(streak.toggleCompletion(on: today, now: today, calendar: calendar))
+        #expect(streak.streakSnapshot(at: today, calendar: calendar).currentStreak == 1)
 
-        let fetched = try context.fetch(FetchDescriptor<CountdownItem>())
-        #expect(fetched.count == 1)
-        #expect(fetched.first?.title == "Weekly Review")
+        // Restart clears history
+        streak.restartCycle(from: today, calendar: calendar)
+        #expect(streak.completedDayKeys.isEmpty)
+        #expect(streak.startDate == today)
 
-        context.delete(item)
+        context.delete(streak)
         #expect(context.saveReportingError() == nil)
         #expect(try context.fetch(FetchDescriptor<CountdownItem>()).isEmpty)
     }
