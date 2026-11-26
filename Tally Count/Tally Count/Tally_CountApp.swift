@@ -3,7 +3,7 @@ import SwiftUI
 import TallyCore
 
 @main
-struct Tally_CountdownApp: App {
+struct Tally_CountApp: App {
     private let containerResult: TallyContainerResult
 
     init() {
@@ -14,7 +14,7 @@ struct Tally_CountdownApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TallyAppContainerView(result: containerResult, appDisplayName: "Tally: Countdown") {
+            TallyAppContainerView(result: containerResult, appDisplayName: "Tally: Count") {
                 ContentView()
             }
         }

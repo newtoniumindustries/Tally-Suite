@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AE93880B309F100000D49992"
-               BuildableName = "Tally Countdown.app"
-               ReferencedContainer = "container:Tally Countdown.xcodeproj">
+               BuildableName = "Tally Count.app"
+               ReferencedContainer = "container:Tally Count.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AE938906309F110000D49992"
-               BuildableName = "Tally CountdownTests.xctest"
-               BlueprintName = "Tally CountdownTests"
-               ReferencedContainer = "container:Tally Countdown.xcodeproj">
+               BuildableName = "Tally CountTests.xctest"
+               BlueprintName = "Tally CountTests"
+               ReferencedContainer = "container:Tally Count.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -56,8 +56,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AE93880B309F100000D49992"
-            BuildableName = "Tally Countdown.app"
-            ReferencedContainer = "container:Tally Countdown.xcodeproj">
+            BuildableName = "Tally Count.app"
+            ReferencedContainer = "container:Tally Count.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,8 +72,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AE93880B309F100000D49992"
-            BuildableName = "Tally Countdown.app"
-            ReferencedContainer = "container:Tally Countdown.xcodeproj">
+            BuildableName = "Tally Count.app"
+            ReferencedContainer = "container:Tally Count.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -16,24 +16,24 @@
 			containerPortal = AE938804309F100000D49992 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AE93880B309F100000D49992;
-			remoteInfo = "Tally Countdown";
+			remoteInfo = "Tally Count";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AE93880C309F100000D49992 /* Tally Countdown.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tally Countdown.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		AE938901309F110000D49992 /* Tally CountdownTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tally CountdownTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE93880C309F100000D49992 /* Tally Count.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tally Count.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE938901309F110000D49992 /* Tally CountTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tally CountTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AE93880E309F100000D49992 /* Tally Countdown */ = {
+		AE93880E309F100000D49992 /* Tally Count */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Tally Countdown";
+			path = "Tally Count";
 			sourceTree = "<group>";
 		};
-		AE938902309F110000D49992 /* Tally CountdownTests */ = {
+		AE938902309F110000D49992 /* Tally CountTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Tally CountdownTests";
+			path = "Tally CountTests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -56,8 +56,8 @@
 		AE938803309F100000D49992 = {
 			isa = PBXGroup;
 			children = (
-				AE93880E309F100000D49992 /* Tally Countdown */,
-				AE938902309F110000D49992 /* Tally CountdownTests */,
+				AE93880E309F100000D49992 /* Tally Count */,
+				AE938902309F110000D49992 /* Tally CountTests */,
 				AE938810309F100000D49992 /* Frameworks */,
 				AE93880D309F100000D49992 /* Products */,
 			);
@@ -66,8 +66,8 @@
 		AE93880D309F100000D49992 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AE93880C309F100000D49992 /* Tally Countdown.app */,
-				AE938901309F110000D49992 /* Tally CountdownTests.xctest */,
+				AE93880C309F100000D49992 /* Tally Count.app */,
+				AE938901309F110000D49992 /* Tally CountTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,9 +82,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AE93880B309F100000D49992 /* Tally Countdown */ = {
+		AE93880B309F100000D49992 /* Tally Count */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AE938819309F100000D49992 /* Build configuration list for PBXNativeTarget "Tally Countdown" */;
+			buildConfigurationList = AE938819309F100000D49992 /* Build configuration list for PBXNativeTarget "Tally Count" */;
 			buildPhases = (
 				AE938808309F100000D49992 /* Sources */,
 				AE938809309F100000D49992 /* Frameworks */,
@@ -93,19 +93,19 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				AE93880E309F100000D49992 /* Tally Countdown */,
+				AE93880E309F100000D49992 /* Tally Count */,
 			);
-			name = "Tally Countdown";
+			name = "Tally Count";
 			packageProductDependencies = (
 				AE938811309F100000D49992 /* TallyCore */,
 			);
-			productName = "Tally Countdown";
-			productReference = AE93880C309F100000D49992 /* Tally Countdown.app */;
+			productName = "Tally Count";
+			productReference = AE93880C309F100000D49992 /* Tally Count.app */;
 			productType = "com.apple.product-type.application";
 		};
-		AE938906309F110000D49992 /* Tally CountdownTests */ = {
+		AE938906309F110000D49992 /* Tally CountTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AE93890B309F110000D49992 /* Build configuration list for PBXNativeTarget "Tally CountdownTests" */;
+			buildConfigurationList = AE93890B309F110000D49992 /* Build configuration list for PBXNativeTarget "Tally CountTests" */;
 			buildPhases = (
 				AE938903309F110000D49992 /* Sources */,
 				AE938904309F110000D49992 /* Frameworks */,
@@ -117,11 +117,11 @@
 				AE938908309F110000D49992 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				AE938902309F110000D49992 /* Tally CountdownTests */,
+				AE938902309F110000D49992 /* Tally CountTests */,
 			);
-			name = "Tally CountdownTests";
-			productName = "Tally CountdownTests";
-			productReference = AE938901309F110000D49992 /* Tally CountdownTests.xctest */;
+			name = "Tally CountTests";
+			productName = "Tally CountTests";
+			productReference = AE938901309F110000D49992 /* Tally CountTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -143,7 +143,7 @@
 					};
 				};
 			};
-			buildConfigurationList = AE938807309F100000D49992 /* Build configuration list for PBXProject "Tally Countdown" */;
+			buildConfigurationList = AE938807309F100000D49992 /* Build configuration list for PBXProject "Tally Count" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -157,8 +157,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AE93880B309F100000D49992 /* Tally Countdown */,
-				AE938906309F110000D49992 /* Tally CountdownTests */,
+				AE93880B309F100000D49992 /* Tally Count */,
+				AE938906309F110000D49992 /* Tally CountTests */,
 			);
 		};
 /* End PBXProject section */
@@ -192,13 +192,13 @@
 /* Begin PBXTargetDependency section */
 		AE938908309F110000D49992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AE93880B309F100000D49992 /* Tally Countdown */;
+			target = AE93880B309F100000D49992 /* Tally Count */;
 			targetProxy = AE938907309F110000D49992 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		AE938817309F100000D49992 /* Debug configuration for PBXProject "Tally Countdown" */ = {
+		AE938817309F100000D49992 /* Debug configuration for PBXProject "Tally Count" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -262,7 +262,7 @@
 			};
 			name = Debug;
 		};
-		AE938818309F100000D49992 /* Release configuration for PBXProject "Tally Countdown" */ = {
+		AE938818309F100000D49992 /* Release configuration for PBXProject "Tally Count" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -319,7 +319,7 @@
 			};
 			name = Release;
 		};
-		AE93881A309F100000D49992 /* Debug configuration for PBXNativeTarget "Tally Countdown" */ = {
+		AE93881A309F100000D49992 /* Debug configuration for PBXNativeTarget "Tally Count" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -329,7 +329,7 @@
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Countdown";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Count";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -340,7 +340,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-Countdown";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-Count";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -352,7 +352,7 @@
 			};
 			name = Debug;
 		};
-		AE93881B309F100000D49992 /* Release configuration for PBXNativeTarget "Tally Countdown" */ = {
+		AE93881B309F100000D49992 /* Release configuration for PBXNativeTarget "Tally Count" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -362,7 +362,7 @@
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Countdown";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Count";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -373,7 +373,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-Countdown";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-Count";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -385,7 +385,7 @@
 			};
 			name = Release;
 		};
-		AE938909309F110000D49992 /* Debug configuration for PBXNativeTarget "Tally CountdownTests" */ = {
+		AE938909309F110000D49992 /* Debug configuration for PBXNativeTarget "Tally CountTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -395,7 +395,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-CountdownTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-CountTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -403,11 +403,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tally Countdown.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tally Countdown";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tally Count.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tally Count";
 			};
 			name = Debug;
 		};
-		AE93890A309F110000D49992 /* Release configuration for PBXNativeTarget "Tally CountdownTests" */ = {
+		AE93890A309F110000D49992 /* Release configuration for PBXNativeTarget "Tally CountTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -417,7 +417,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-CountdownTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-CountTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -425,34 +425,34 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tally Countdown.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tally Countdown";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tally Count.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tally Count";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AE938807309F100000D49992 /* Build configuration list for PBXProject "Tally Countdown" */ = {
+		AE938807309F100000D49992 /* Build configuration list for PBXProject "Tally Count" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AE938817309F100000D49992 /* Debug configuration for PBXProject "Tally Countdown" */,
-				AE938818309F100000D49992 /* Release configuration for PBXProject "Tally Countdown" */,
+				AE938817309F100000D49992 /* Debug configuration for PBXProject "Tally Count" */,
+				AE938818309F100000D49992 /* Release configuration for PBXProject "Tally Count" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		AE938819309F100000D49992 /* Build configuration list for PBXNativeTarget "Tally Countdown" */ = {
+		AE938819309F100000D49992 /* Build configuration list for PBXNativeTarget "Tally Count" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AE93881A309F100000D49992 /* Debug configuration for PBXNativeTarget "Tally Countdown" */,
-				AE93881B309F100000D49992 /* Release configuration for PBXNativeTarget "Tally Countdown" */,
+				AE93881A309F100000D49992 /* Debug configuration for PBXNativeTarget "Tally Count" */,
+				AE93881B309F100000D49992 /* Release configuration for PBXNativeTarget "Tally Count" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		AE93890B309F110000D49992 /* Build configuration list for PBXNativeTarget "Tally CountdownTests" */ = {
+		AE93890B309F110000D49992 /* Build configuration list for PBXNativeTarget "Tally CountTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AE938909309F110000D49992 /* Debug configuration for PBXNativeTarget "Tally CountdownTests" */,
-				AE93890A309F110000D49992 /* Release configuration for PBXNativeTarget "Tally CountdownTests" */,
+				AE938909309F110000D49992 /* Debug configuration for PBXNativeTarget "Tally CountTests" */,
+				AE93890A309F110000D49992 /* Release configuration for PBXNativeTarget "Tally CountTests" */,
 			);
 			defaultConfigurationName = Release;
 		};

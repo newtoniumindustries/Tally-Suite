@@ -83,7 +83,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("Tally: Countdown")
+            .navigationTitle("Tally: Count")
             .navigationDestination(for: CountdownItem.self) { item in
                 CountdownDetailView(item: item)
             }

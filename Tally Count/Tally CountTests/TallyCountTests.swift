@@ -3,7 +3,7 @@ import SwiftData
 import TallyCore
 import Testing
 @preconcurrency import UserNotifications
-@testable import Tally_Countdown
+@testable import Tally_Count
 
 @MainActor
 private final class MockNotificationClient: NotificationCenterClient {
@@ -340,7 +340,7 @@ struct CountdownCalculatorTests {
     }
 }
 
-@Suite("Tally Countdown Persistence & Notification Scheduler Tests")
+@Suite("Tally Count Persistence & Notification Scheduler Tests")
 @MainActor
 struct CountdownLifecycleTests {
     @Test("NotificationScheduler schedules countdown alerts and repeating daily streak reminders")

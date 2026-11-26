@@ -591,7 +591,7 @@ enum CountdownCalculator: Sendable {
     nonisolated static let maxLeadMinutes = 525_600 // 365 days
 
     nonisolated static func notificationIdentifier(for itemID: UUID, kind: ScheduledAlert.Kind) -> String {
-        "tally-countdown-\(itemID.uuidString)-\(kind.rawValue)"
+        "tally-count-\(itemID.uuidString)-\(kind.rawValue)"
     }
 
     nonisolated static func allNotificationIdentifiers(for itemID: UUID) -> [String] {
@@ -1058,7 +1058,7 @@ enum CountdownCalculator: Sendable {
 
         let target = normalizeDate(item.targetDate, isAllDay: item.isAllDay, calendar: calendar)
         let displayTitle = item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? "Tally: Countdown"
+            ? "Tally: Count"
             : item.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var alerts: [ScheduledAlert] = []
@@ -1111,7 +1111,7 @@ enum CountdownCalculator: Sendable {
         guard !snap.isComplete else { return nil }
 
         let displayTitle = item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? "Tally: Countdown"
+            ? "Tally: Count"
             : item.title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         return ScheduledDailyReminder(
