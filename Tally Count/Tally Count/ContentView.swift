@@ -27,6 +27,7 @@ struct ContentView: View {
     @Query(sort: \CountdownItem.createdAt, order: .reverse) private var items: [CountdownItem]
 
     @State private var navigationPath: [CountdownItem] = []
+    @State private var pendingItemID: UUID?
     @State private var selectedFilter: CountdownFilter = .all
     @State private var selectedSort: CountdownSort = .soonest
     @State private var showingNewEditor = false
@@ -154,6 +155,12 @@ struct ContentView: View {
                     }
                 }
             }
+            .onAppear {
+                consumePendingItemNavigation()
+            }
+            .onChange(of: items.count) { _, _ in
+                consumePendingItemNavigation()
+            }
             .onOpenURL { url in
                 handleDeepLink(url)
             }
@@ -166,10 +173,18 @@ struct ContentView: View {
         case .newTimer:
             showingNewEditor = true
         case .item(let id):
-            if let matched = items.first(where: { $0.id == id }) {
-                navigationPath = [matched]
-            }
+            pendingItemID = id
+            consumePendingItemNavigation()
         }
+    }
+
+    private func consumePendingItemNavigation() {
+        guard let targetID = pendingItemID,
+              let matched = items.first(where: { $0.id == targetID }) else {
+            return
+        }
+        pendingItemID = nil
+        navigationPath = [matched]
     }
 
     private var filterBar: some View {

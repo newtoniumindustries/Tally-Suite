@@ -10,24 +10,115 @@ struct TimersOverviewEntry: TimelineEntry, Sendable {
 
 struct TimersOverviewTimelineProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> TimersOverviewEntry {
-        TimersOverviewEntry(date: Date(), filter: .all, timers: [])
+        TimersOverviewEntry(date: Date(), filter: .all, timers: Self.sampleTimers)
     }
 
     func snapshot(for configuration: SelectOverviewFilterIntent, in context: Context) async -> TimersOverviewEntry {
         let now = Date()
+        if context.isPreview {
+            return TimersOverviewEntry(date: now, filter: configuration.filter, timers: Self.sampleTimers)
+        }
         let items = await fetchFilteredTimers(filter: configuration.filter, now: now)
-        return TimersOverviewEntry(date: now, filter: configuration.filter, timers: items)
+        return TimersOverviewEntry(
+            date: now,
+            filter: configuration.filter,
+            timers: items.isEmpty ? Self.sampleTimers : items
+        )
     }
 
     func timeline(for configuration: SelectOverviewFilterIntent, in context: Context) async -> Timeline<TimersOverviewEntry> {
         let now = Date()
         let items = await fetchFilteredTimers(filter: configuration.filter, now: now)
         let cal = Calendar.current
-        let nextRefresh = cal.date(byAdding: .minute, value: 30, to: now) ?? now.addingTimeInterval(1800)
-        return Timeline(
-            entries: [TimersOverviewEntry(date: now, filter: configuration.filter, timers: items)],
-            policy: .after(nextRefresh)
-        )
+
+        var refreshDates: [Date] = [now]
+        if let nextHalfHour = cal.date(byAdding: .minute, value: 30, to: now) {
+            refreshDates.append(nextHalfHour)
+        }
+        if let nextHour = cal.date(byAdding: .hour, value: 1, to: now) {
+            refreshDates.append(nextHour)
+        }
+        if let tomorrowStart = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: now)) {
+            refreshDates.append(tomorrowStart)
+        }
+        for item in items {
+            let snap = CountdownCalculator.snapshot(for: item.value, at: now)
+            if let target = snap.effectiveTargetDate, target > now {
+                refreshDates.append(target)
+            }
+        }
+
+        let uniqueSorted = Array(Set(refreshDates)).sorted()
+        let entries = uniqueSorted.map {
+            TimersOverviewEntry(date: $0, filter: configuration.filter, timers: items)
+        }
+        let reloadDate = cal.date(byAdding: .hour, value: 2, to: now) ?? now.addingTimeInterval(7200)
+        return Timeline(entries: entries, policy: .after(reloadDate))
+    }
+
+    private static var sampleTimers: [WidgetTimerSummary] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let streakStart = cal.date(byAdding: .day, value: -14, to: today) ?? today
+        let streakEnd = cal.date(byAdding: .day, value: 15, to: today) ?? today
+        let streakKeys = (-11...0).compactMap { offset in
+            cal.date(byAdding: .day, value: offset, to: today).map { CountdownCalculator.dayKey(for: $0, calendar: cal) }
+        }
+        let streakID = UUID()
+        let vacationID = UUID()
+        let vacationStart = cal.date(byAdding: .day, value: -10, to: today) ?? today
+        let vacationTarget = cal.date(byAdding: .day, value: 14, to: today) ?? today
+
+        return [
+            WidgetTimerSummary(
+                id: streakID,
+                title: "Daily Run",
+                symbolName: "🔥",
+                colorTheme: .orange,
+                isPinned: true,
+                value: CountdownItemValue(
+                    id: streakID,
+                    title: "Daily Run",
+                    mode: .streak,
+                    startDate: streakStart,
+                    targetDate: streakEnd,
+                    hasTargetDate: true,
+                    isAllDay: true,
+                    repeatRule: .none,
+                    customRepeatDays: 7,
+                    alertsEnabled: true,
+                    alertAtCompletion: false,
+                    alertLeadMinutes: 0,
+                    completedDayKeys: streakKeys,
+                    dailyReminderHour: 20,
+                    dailyReminderMinute: 0
+                )
+            ),
+            WidgetTimerSummary(
+                id: vacationID,
+                title: "Vacation",
+                symbolName: "✈️",
+                colorTheme: .blue,
+                isPinned: true,
+                value: CountdownItemValue(
+                    id: vacationID,
+                    title: "Vacation",
+                    mode: .countdown,
+                    startDate: vacationStart,
+                    targetDate: vacationTarget,
+                    hasTargetDate: true,
+                    isAllDay: true,
+                    repeatRule: .none,
+                    customRepeatDays: 7,
+                    alertsEnabled: true,
+                    alertAtCompletion: true,
+                    alertLeadMinutes: 1440,
+                    completedDayKeys: [],
+                    dailyReminderHour: 20,
+                    dailyReminderMinute: 0
+                )
+            )
+        ]
     }
 
     private func fetchFilteredTimers(filter: TimersOverviewFilter, now: Date) async -> [WidgetTimerSummary] {

@@ -8,12 +8,21 @@
 import SwiftData
 import SwiftUI
 import TallyCore
+import UIKit
 
 @main
 struct Tally_ItApp: App {
     private let containerResult: TallyContainerResult
 
     init() {
+        TallyKeyboard.dismissHandler = {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil,
+                from: nil,
+                for: nil
+            )
+        }
         self.containerResult = TallyItAppGroup.makeContainerResult()
     }
 

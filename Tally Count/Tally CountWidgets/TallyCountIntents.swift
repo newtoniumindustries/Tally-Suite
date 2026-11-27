@@ -17,10 +17,17 @@ struct WidgetTimerSummary: Sendable, Equatable, Identifiable {
 
 @MainActor
 enum TallyCountWidgetStore {
+    private static let sharedContainer: ModelContainer? = {
+        TallyCountAppGroup.makeContainerResult().container
+    }()
+
+    static func makeContext() -> ModelContext? {
+        guard let sharedContainer else { return nil }
+        return ModelContext(sharedContainer)
+    }
+
     static func fetchAllTimers(now: Date = Date()) -> [WidgetTimerSummary] {
-        let result = TallyCountAppGroup.makeContainerResult()
-        guard let container = result.container else { return [] }
-        let context = container.mainContext
+        guard let context = makeContext() else { return [] }
         let descriptor = FetchDescriptor<CountdownItem>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
@@ -45,6 +52,17 @@ enum TallyCountWidgetStore {
                 isPinned: item.isPinned,
                 value: item.valueSnapshot
             )
+        }
+    }
+
+    static func toggleStreakDay(itemID: UUID, day: Date, now: Date = Date()) {
+        guard let context = makeContext() else { return }
+        let descriptor = FetchDescriptor<CountdownItem>(
+            predicate: #Predicate { $0.id == itemID }
+        )
+        guard let item = try? context.fetch(descriptor).first else { return }
+        if item.toggleCompletion(on: day, now: now) {
+            context.saveLoggingErrors(reloadWidgets: true)
         }
     }
 
@@ -165,18 +183,9 @@ struct ToggleStreakTodayIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         guard let uuid = UUID(uuidString: itemID) else { return .result() }
+        let now = Date()
         await MainActor.run {
-            let result = TallyCountAppGroup.makeContainerResult()
-            guard let container = result.container else { return }
-            let context = container.mainContext
-            let descriptor = FetchDescriptor<CountdownItem>(
-                predicate: #Predicate { $0.id == uuid }
-            )
-            guard let item = try? context.fetch(descriptor).first else { return }
-            let now = Date()
-            if item.toggleCompletion(on: now, now: now) {
-                context.saveLoggingErrors(reloadWidgets: true)
-            }
+            TallyCountWidgetStore.toggleStreakDay(itemID: uuid, day: now, now: now)
         }
         return .result()
     }
@@ -207,18 +216,9 @@ struct ToggleStreakDayIntent: AppIntent {
               let day = CountdownCalculator.date(fromDayKey: dayKey) else {
             return .result()
         }
+        let now = Date()
         await MainActor.run {
-            let result = TallyCountAppGroup.makeContainerResult()
-            guard let container = result.container else { return }
-            let context = container.mainContext
-            let descriptor = FetchDescriptor<CountdownItem>(
-                predicate: #Predicate { $0.id == uuid }
-            )
-            guard let item = try? context.fetch(descriptor).first else { return }
-            let now = Date()
-            if item.toggleCompletion(on: day, now: now) {
-                context.saveLoggingErrors(reloadWidgets: true)
-            }
+            TallyCountWidgetStore.toggleStreakDay(itemID: uuid, day: day, now: now)
         }
         return .result()
     }
