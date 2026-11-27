@@ -8,6 +8,9 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \CanastaGame.date, order: .reverse) private var games: [CanastaGame]
 
+    @State private var navigationPath: [CanastaGame] = []
+    @State private var pendingGameID: UUID?
+    @State private var autoOpenRoundForGameID: UUID?
     @State private var showingNewGameSheet = false
     @State private var showingHowToPlay = false
     @State private var showingRoster = false
@@ -15,7 +18,7 @@ struct ContentView: View {
     @State private var saveErrorMessage: String?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 if games.isEmpty {
                     ContentUnavailableView(
@@ -56,7 +59,13 @@ struct ContentView: View {
             }
             .navigationTitle("Tally: Canasta")
             .navigationDestination(for: CanastaGame.self) { game in
-                GameLedgerView(game: game)
+                GameLedgerView(game: game, autoOpenRoundForGameID: $autoOpenRoundForGameID)
+            }
+            .onOpenURL { url in
+                handleDeepLink(url)
+            }
+            .onChange(of: games.count) { _, _ in
+                consumePendingGameNavigation()
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -113,6 +122,33 @@ struct ContentView: View {
         if let error = modelContext.saveReportingError() {
             saveErrorMessage = error
         }
+    }
+
+    private func handleDeepLink(_ url: URL) {
+        guard let link = TallyCanastaDeepLink.parse(url) else { return }
+        switch link {
+        case .game(let id):
+            autoOpenRoundForGameID = nil
+            pendingGameID = id
+            consumePendingGameNavigation()
+        case .newRound(let gameID):
+            autoOpenRoundForGameID = gameID
+            pendingGameID = gameID
+            consumePendingGameNavigation()
+        case .newGame:
+            showingNewGameSheet = true
+        case .howToPlay:
+            showingHowToPlay = true
+        }
+    }
+
+    private func consumePendingGameNavigation() {
+        guard let targetID = pendingGameID,
+              let game = games.first(where: { $0.gameID == targetID }) else {
+            return
+        }
+        pendingGameID = nil
+        navigationPath = [game]
     }
 }
 

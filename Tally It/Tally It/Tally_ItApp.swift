@@ -14,12 +14,7 @@ struct Tally_ItApp: App {
     private let containerResult: TallyContainerResult
 
     init() {
-        self.containerResult = TallyDataConfig.makeContainer(for: [
-            GameType.self,
-            Team.self,
-            Match.self,
-            MatchScoreEntry.self
-        ])
+        self.containerResult = TallyItAppGroup.makeContainerResult()
     }
 
     var body: some Scene {

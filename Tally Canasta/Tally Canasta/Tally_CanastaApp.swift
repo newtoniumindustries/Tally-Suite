@@ -7,12 +7,7 @@ struct Tally_CanastaApp: App {
     private let containerResult: TallyContainerResult
 
     init() {
-        self.containerResult = TallyDataConfig.makeContainer(for: [
-            CanastaGame.self,
-            Round.self,
-            RuleSet.self,
-            TallyPlayer.self
-        ])
+        self.containerResult = TallyCanastaAppGroup.makeContainerResult()
     }
 
     var body: some Scene {

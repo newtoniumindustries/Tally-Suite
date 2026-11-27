@@ -73,4 +73,34 @@ struct TallyCorePersistenceTests {
         #expect(fetched.count == 1)
         #expect(fetched.first?.name == "Alice")
     }
+
+    @Test("Legacy store migration copies SQLite store and sidecars once without overwriting existing data")
+    func legacyStoreMigration() throws {
+        let fm = FileManager.default
+        let tempRoot = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? fm.removeItem(at: tempRoot) }
+
+        let legacyDir = tempRoot.appendingPathComponent("legacy", isDirectory: true)
+        let groupDir = tempRoot.appendingPathComponent("group/Library/Application Support", isDirectory: true)
+        try fm.createDirectory(at: legacyDir, withIntermediateDirectories: true)
+
+        let legacyStore = legacyDir.appendingPathComponent("default.store")
+        let legacyWal = URL(fileURLWithPath: legacyStore.path + "-wal")
+        let destStore = groupDir.appendingPathComponent("default.store")
+        let destWal = URL(fileURLWithPath: destStore.path + "-wal")
+
+        try Data("legacy-db".utf8).write(to: legacyStore)
+        try Data("legacy-wal".utf8).write(to: legacyWal)
+
+        let migratedFirst = try TallyDataConfig.migrateLegacyStoreIfNeeded(from: legacyStore, to: destStore, fileManager: fm)
+        #expect(migratedFirst)
+        #expect(try Data(contentsOf: destStore) == Data("legacy-db".utf8))
+        #expect(try Data(contentsOf: destWal) == Data("legacy-wal".utf8))
+
+        // Mutate destination and verify a second call does not overwrite it
+        try Data("updated-db".utf8).write(to: destStore)
+        let migratedSecond = try TallyDataConfig.migrateLegacyStoreIfNeeded(from: legacyStore, to: destStore, fileManager: fm)
+        #expect(!migratedSecond)
+        #expect(try Data(contentsOf: destStore) == Data("updated-db".utf8))
+    }
 }

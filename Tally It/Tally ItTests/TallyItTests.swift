@@ -206,4 +206,17 @@ struct TallyItMatchTests {
         #expect(context.saveReportingError() == nil)
         #expect(try context.fetch(FetchDescriptor<MatchScoreEntry>()).isEmpty)
     }
+
+    @Test("TallyItDeepLink builds and parses match, standings, and new-match URLs cleanly")
+    func deepLinkRoundTrip() {
+        let matchID = UUID()
+        let gameTypeID = UUID()
+
+        #expect(TallyItDeepLink.parse(TallyItDeepLink.match(matchID).url) == .match(matchID))
+        #expect(TallyItDeepLink.parse(TallyItDeepLink.standings(gameTypeID: nil).url) == .standings(gameTypeID: nil))
+        #expect(TallyItDeepLink.parse(TallyItDeepLink.standings(gameTypeID: gameTypeID).url) == .standings(gameTypeID: gameTypeID))
+        #expect(TallyItDeepLink.parse(TallyItDeepLink.newMatch.url) == .newMatch)
+        #expect(TallyItDeepLink.parse(URL(string: "https://example.com")!) == nil)
+        #expect(TallyItDeepLink.parse(URL(string: "tallyit://match/not-a-uuid")!) == nil)
+    }
 }

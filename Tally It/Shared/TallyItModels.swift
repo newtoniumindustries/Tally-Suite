@@ -347,7 +347,7 @@ final class Match {
 
 // MARK: - Standings Calculation
 
-struct TeamStandingRow: Identifiable, Equatable {
+struct TeamStandingRow: Identifiable, Equatable, Sendable {
     let id: UUID
     let teamName: String
     var wins: Int = 0

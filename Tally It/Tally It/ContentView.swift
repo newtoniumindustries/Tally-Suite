@@ -2,17 +2,45 @@ import SwiftData
 import SwiftUI
 import TallyCore
 
+enum TallyItTab: Hashable {
+    case play
+    case standings
+    case setup
+}
+
 struct ContentView: View {
+    @State private var selectedTab: TallyItTab = .play
+    @State private var pendingMatchID: UUID?
+    @State private var pendingNewMatch = false
+    @State private var standingsGameTypeID: UUID?
+
     var body: some View {
-        TabView {
-            Tab("Play", systemImage: "sportscourt.fill") {
-                ActiveMatchesView()
+        TabView(selection: $selectedTab) {
+            Tab("Play", systemImage: "sportscourt.fill", value: TallyItTab.play) {
+                ActiveMatchesView(
+                    pendingMatchID: $pendingMatchID,
+                    pendingNewMatch: $pendingNewMatch
+                )
             }
-            Tab("Standings", systemImage: "trophy.fill") {
-                StandingsView()
+            Tab("Standings", systemImage: "trophy.fill", value: TallyItTab.standings) {
+                StandingsView(selectedGameTypeID: $standingsGameTypeID)
             }
-            Tab("Setup", systemImage: "slider.horizontal.3") {
+            Tab("Setup", systemImage: "slider.horizontal.3", value: TallyItTab.setup) {
                 SetupView()
+            }
+        }
+        .onOpenURL { url in
+            guard let link = TallyItDeepLink.parse(url) else { return }
+            switch link {
+            case .match(let id):
+                selectedTab = .play
+                pendingMatchID = id
+            case .standings(let gameTypeID):
+                standingsGameTypeID = gameTypeID
+                selectedTab = .standings
+            case .newMatch:
+                selectedTab = .play
+                pendingNewMatch = true
             }
         }
     }
@@ -21,6 +49,9 @@ struct ContentView: View {
 // MARK: - 1. Play & Match History
 
 struct ActiveMatchesView: View {
+    @Binding var pendingMatchID: UUID?
+    @Binding var pendingNewMatch: Bool
+
     @Environment(\.modelContext) private var context
     @Environment(\.isUsingFallbackStore) private var isUsingFallbackStore
 
@@ -141,7 +172,19 @@ struct ActiveMatchesView: View {
             .navigationDestination(for: Match.self) { match in
                 LiveScoreboardView(match: match)
             }
-            .onAppear(perform: seedDefaultsIfNeeded)
+            .onAppear {
+                seedDefaultsIfNeeded()
+                consumePendingNavigation()
+            }
+            .onChange(of: pendingMatchID) { _, _ in
+                consumePendingNavigation()
+            }
+            .onChange(of: pendingNewMatch) { _, _ in
+                consumePendingNavigation()
+            }
+            .onChange(of: matches.count) { _, _ in
+                consumePendingNavigation()
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -246,6 +289,18 @@ struct ActiveMatchesView: View {
             return
         }
         navigationPath.append(match)
+    }
+
+    private func consumePendingNavigation() {
+        if pendingNewMatch {
+            pendingNewMatch = false
+            showingNewMatchSheet = true
+        }
+        if let matchID = pendingMatchID,
+           let match = matches.first(where: { $0.id == matchID }) {
+            pendingMatchID = nil
+            navigationPath = [match]
+        }
     }
 
     private func seedDefaultsIfNeeded() {

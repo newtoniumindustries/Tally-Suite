@@ -338,6 +338,18 @@ struct CountdownCalculatorTests {
         #expect(CountdownIconCatalog.extractFirstEmoji(from: "Trip ✈️!") == "✈️")
         #expect(CountdownIconCatalog.extractFirstEmoji(from: "abc123") == nil)
     }
+
+    @Test("TallyCountDeepLink builds and parses item and new timer URLs cleanly")
+    func deepLinkRoundTrip() {
+        let id = UUID()
+        let itemURL = TallyCountDeepLink.item(id).url
+        #expect(TallyCountDeepLink.parse(itemURL) == .item(id))
+
+        let newURL = TallyCountDeepLink.newTimer.url
+        #expect(TallyCountDeepLink.parse(newURL) == .newTimer)
+
+        #expect(TallyCountDeepLink.parse(URL(string: "https://example.com")!) == nil)
+    }
 }
 
 @Suite("Tally Count Persistence & Notification Scheduler Tests")

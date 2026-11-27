@@ -7,9 +7,7 @@ struct Tally_CountApp: App {
     private let containerResult: TallyContainerResult
 
     init() {
-        self.containerResult = TallyDataConfig.makeContainer(for: [
-            CountdownItem.self
-        ])
+        self.containerResult = TallyCountAppGroup.makeContainerResult()
     }
 
     var body: some Scene {

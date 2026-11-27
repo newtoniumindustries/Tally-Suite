@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		AE82779E308EBEBE00C38881 /* TallyCore in Frameworks */ = {isa = PBXBuildFile; productRef = AE82779D308EBEBE00C38881 /* TallyCore */; };
+		AE82790B308EC20000C38881 /* TallyCore in Frameworks */ = {isa = PBXBuildFile; productRef = AE82790A308EC20000C38881 /* TallyCore */; };
+		AE82790E308EC20000C38881 /* Tally ItWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AE827901308EC20000C38881 /* Tally ItWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -18,22 +20,77 @@
 			remoteGlobalIDString = AE82778B308EBC8F00C38881;
 			remoteInfo = "Tally It";
 		};
+		AE82790C308EC20000C38881 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AE827784308EBC8F00C38881 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AE827906308EC20000C38881;
+			remoteInfo = "Tally ItWidgets";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AE82790F308EC20000C38881 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AE82790E308EC20000C38881 /* Tally ItWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AE82778C308EBC8F00C38881 /* Tally It.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tally It.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE827801308EC00000C38881 /* Tally ItTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tally ItTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE827901308EC20000C38881 /* Tally ItWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Tally ItWidgets.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AE827910308EC20000C38881 /* Exceptions for "Tally It" folder in "Tally It" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AE82778B308EBC8F00C38881 /* Tally It */;
+		};
+		AE827911308EC20000C38881 /* Exceptions for "Tally ItWidgets" folder in "Tally ItWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AE827906308EC20000C38881 /* Tally ItWidgets */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AE82778E308EBC8F00C38881 /* Tally It */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AE827910308EC20000C38881 /* Exceptions for "Tally It" folder in "Tally It" target */,
+			);
 			path = "Tally It";
 			sourceTree = "<group>";
 		};
 		AE827802308EC00000C38881 /* Tally ItTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Tally ItTests";
+			sourceTree = "<group>";
+		};
+		AE827900308EC20000C38881 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		AE827902308EC20000C38881 /* Tally ItWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AE827911308EC20000C38881 /* Exceptions for "Tally ItWidgets" folder in "Tally ItWidgets" target */,
+			);
+			path = "Tally ItWidgets";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -50,13 +107,21 @@
 			files = (
 			);
 		};
+		AE827904308EC20000C38881 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				AE82790B308EC20000C38881 /* TallyCore in Frameworks */,
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		AE827783308EBC8F00C38881 = {
 			isa = PBXGroup;
 			children = (
+				AE827900308EC20000C38881 /* Shared */,
 				AE82778E308EBC8F00C38881 /* Tally It */,
+				AE827902308EC20000C38881 /* Tally ItWidgets */,
 				AE827802308EC00000C38881 /* Tally ItTests */,
 				AE82779C308EBEBE00C38881 /* Frameworks */,
 				AE82778D308EBC8F00C38881 /* Products */,
@@ -67,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				AE82778C308EBC8F00C38881 /* Tally It.app */,
+				AE827901308EC20000C38881 /* Tally ItWidgets.appex */,
 				AE827801308EC00000C38881 /* Tally ItTests.xctest */,
 			);
 			name = Products;
@@ -89,10 +155,15 @@
 				AE827788308EBC8F00C38881 /* Sources */,
 				AE827789308EBC8F00C38881 /* Frameworks */,
 				AE82778A308EBC8F00C38881 /* Resources */,
+				AE82790F308EC20000C38881 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
+			dependencies = (
+				AE82790D308EC20000C38881 /* PBXTargetDependency */,
+			);
 			fileSystemSynchronizedGroups = (
+				AE827900308EC20000C38881 /* Shared */,
 				AE82778E308EBC8F00C38881 /* Tally It */,
 			);
 			name = "Tally It";
@@ -124,6 +195,30 @@
 			productReference = AE827801308EC00000C38881 /* Tally ItTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		AE827906308EC20000C38881 /* Tally ItWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE827909308EC20000C38881 /* Build configuration list for PBXNativeTarget "Tally ItWidgets" */;
+			buildPhases = (
+				AE827903308EC20000C38881 /* Sources */,
+				AE827904308EC20000C38881 /* Frameworks */,
+				AE827905308EC20000C38881 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AE827900308EC20000C38881 /* Shared */,
+				AE827902308EC20000C38881 /* Tally ItWidgets */,
+			);
+			name = "Tally ItWidgets";
+			packageProductDependencies = (
+				AE82790A308EC20000C38881 /* TallyCore */,
+			);
+			productName = "Tally ItWidgets";
+			productReference = AE827901308EC20000C38881 /* Tally ItWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -140,6 +235,9 @@
 					AE827806308EC00000C38881 = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = AE82778B308EBC8F00C38881;
+					};
+					AE827906308EC20000C38881 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -158,6 +256,7 @@
 			projectRoot = "";
 			targets = (
 				AE82778B308EBC8F00C38881 /* Tally It */,
+				AE827906308EC20000C38881 /* Tally ItWidgets */,
 				AE827806308EC00000C38881 /* Tally ItTests */,
 			);
 		};
@@ -170,6 +269,11 @@
 			);
 		};
 		AE827805308EC00000C38881 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		AE827905308EC20000C38881 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -187,6 +291,11 @@
 			files = (
 			);
 		};
+		AE827903308EC20000C38881 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -194,6 +303,11 @@
 			isa = PBXTargetDependency;
 			target = AE82778B308EBC8F00C38881 /* Tally It */;
 			targetProxy = AE827807308EC00000C38881 /* PBXContainerItemProxy */;
+		};
+		AE82790D308EC20000C38881 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AE827906308EC20000C38881 /* Tally ItWidgets */;
+			targetProxy = AE82790C308EC20000C38881 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -324,11 +438,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Tally It/Tally It.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally It/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Tally: It";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -357,11 +473,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Tally It/Tally It.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally It/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Tally: It";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -378,6 +496,70 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AE827907308EC20000C38881 /* Debug configuration for PBXNativeTarget "Tally ItWidgets" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "Tally ItWidgets/Tally ItWidgets.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally ItWidgets/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: It Widgets";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-It.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AE827908308EC20000C38881 /* Release configuration for PBXNativeTarget "Tally ItWidgets" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "Tally ItWidgets/Tally ItWidgets.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally ItWidgets/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: It Widgets";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-It.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
@@ -456,10 +638,22 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		AE827909308EC20000C38881 /* Build configuration list for PBXNativeTarget "Tally ItWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE827907308EC20000C38881 /* Debug configuration for PBXNativeTarget "Tally ItWidgets" */,
+				AE827908308EC20000C38881 /* Release configuration for PBXNativeTarget "Tally ItWidgets" */,
+			);
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		AE82779D308EBEBE00C38881 /* TallyCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TallyCore;
+		};
+		AE82790A308EC20000C38881 /* TallyCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TallyCore;
 		};

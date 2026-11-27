@@ -7,10 +7,16 @@ import TallyCore
 struct GameLedgerView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var game: CanastaGame
+    @Binding var autoOpenRoundForGameID: UUID?
 
     @State private var showingNewRoundEntry = false
     @State private var roundToEdit: Round?
     @State private var saveErrorMessage: String?
+
+    init(game: CanastaGame, autoOpenRoundForGameID: Binding<UUID?> = .constant(nil)) {
+        self.game = game
+        self._autoOpenRoundForGameID = autoOpenRoundForGameID
+    }
 
     private var roundsDescending: [Round] {
         game.sortedRounds.reversed()
@@ -119,6 +125,12 @@ struct GameLedgerView: View {
         }
         .navigationTitle("Scoreboard")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            triggerAutoOpenRoundIfNeeded()
+        }
+        .onChange(of: autoOpenRoundForGameID) { _, _ in
+            triggerAutoOpenRoundIfNeeded()
+        }
         .sheet(isPresented: $showingNewRoundEntry) { RoundEntrySheet(game: game, editingRound: nil) }
         .sheet(item: $roundToEdit) { round in RoundEntrySheet(game: game, editingRound: round) }
         .alert(
@@ -136,6 +148,14 @@ struct GameLedgerView: View {
 
     private func formattedRoundScore(_ score: Int) -> String {
         score >= 0 ? "+\(score)" : "\(score)"
+    }
+
+    private func triggerAutoOpenRoundIfNeeded() {
+        guard autoOpenRoundForGameID == game.gameID else { return }
+        autoOpenRoundForGameID = nil
+        if game.winner == nil {
+            showingNewRoundEntry = true
+        }
     }
 
     private func roundAccessibilityLabel(_ round: Round) -> String {

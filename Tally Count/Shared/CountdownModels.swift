@@ -96,7 +96,7 @@ enum CountdownThemeColor: String, CaseIterable, Identifiable, Sendable {
 }
 
 enum CountdownSymbol {
-    static let all: [String] = [
+    nonisolated static let all: [String] = [
         "hourglass",
         "timer",
         "calendar",

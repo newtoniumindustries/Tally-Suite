@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		AEC25712307A8EE700CF630F /* TallyCore in Frameworks */ = {isa = PBXBuildFile; productRef = AEC25711307A8EE700CF630F /* TallyCore */; };
+		AE7F4B0B30799200009DBE5B /* TallyCore in Frameworks */ = {isa = PBXBuildFile; productRef = AE7F4B0A30799200009DBE5B /* TallyCore */; };
+		AE7F4B0E30799200009DBE5B /* Tally CanastaWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AE7F4B0130799200009DBE5B /* Tally CanastaWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -18,22 +20,77 @@
 			remoteGlobalIDString = AE7F497B307990C7009DBE5B;
 			remoteInfo = "Tally Canasta";
 		};
+		AE7F4B0C30799200009DBE5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AE7F4974307990C7009DBE5B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AE7F4B0630799200009DBE5B;
+			remoteInfo = "Tally CanastaWidgets";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AE7F4B0F30799200009DBE5B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AE7F4B0E30799200009DBE5B /* Tally CanastaWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AE7F497C307990C7009DBE5B /* Tally Canasta.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tally Canasta.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE7F4A0130799100009DBE5B /* Tally CanastaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tally CanastaTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE7F4B0130799200009DBE5B /* Tally CanastaWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Tally CanastaWidgets.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AE7F4B1030799200009DBE5B /* Exceptions for "Tally Canasta" folder in "Tally Canasta" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AE7F497B307990C7009DBE5B /* Tally Canasta */;
+		};
+		AE7F4B1130799200009DBE5B /* Exceptions for "Tally CanastaWidgets" folder in "Tally CanastaWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AE7F4B0630799200009DBE5B /* Tally CanastaWidgets */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AE7F497E307990C7009DBE5B /* Tally Canasta */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AE7F4B1030799200009DBE5B /* Exceptions for "Tally Canasta" folder in "Tally Canasta" target */,
+			);
 			path = "Tally Canasta";
 			sourceTree = "<group>";
 		};
 		AE7F4A0230799100009DBE5B /* Tally CanastaTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Tally CanastaTests";
+			sourceTree = "<group>";
+		};
+		AE7F4B0030799200009DBE5B /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		AE7F4B0230799200009DBE5B /* Tally CanastaWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AE7F4B1130799200009DBE5B /* Exceptions for "Tally CanastaWidgets" folder in "Tally CanastaWidgets" target */,
+			);
+			path = "Tally CanastaWidgets";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -50,13 +107,21 @@
 			files = (
 			);
 		};
+		AE7F4B0430799200009DBE5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				AE7F4B0B30799200009DBE5B /* TallyCore in Frameworks */,
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		AE7F4973307990C7009DBE5B = {
 			isa = PBXGroup;
 			children = (
+				AE7F4B0030799200009DBE5B /* Shared */,
 				AE7F497E307990C7009DBE5B /* Tally Canasta */,
+				AE7F4B0230799200009DBE5B /* Tally CanastaWidgets */,
 				AE7F4A0230799100009DBE5B /* Tally CanastaTests */,
 				AEC25710307A8EE700CF630F /* Frameworks */,
 				AE7F497D307990C7009DBE5B /* Products */,
@@ -67,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				AE7F497C307990C7009DBE5B /* Tally Canasta.app */,
+				AE7F4B0130799200009DBE5B /* Tally CanastaWidgets.appex */,
 				AE7F4A0130799100009DBE5B /* Tally CanastaTests.xctest */,
 			);
 			name = Products;
@@ -89,10 +155,15 @@
 				AE7F4978307990C7009DBE5B /* Sources */,
 				AE7F4979307990C7009DBE5B /* Frameworks */,
 				AE7F497A307990C7009DBE5B /* Resources */,
+				AE7F4B0F30799200009DBE5B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
+			dependencies = (
+				AE7F4B0D30799200009DBE5B /* PBXTargetDependency */,
+			);
 			fileSystemSynchronizedGroups = (
+				AE7F4B0030799200009DBE5B /* Shared */,
 				AE7F497E307990C7009DBE5B /* Tally Canasta */,
 			);
 			name = "Tally Canasta";
@@ -124,6 +195,30 @@
 			productReference = AE7F4A0130799100009DBE5B /* Tally CanastaTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		AE7F4B0630799200009DBE5B /* Tally CanastaWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE7F4B0930799200009DBE5B /* Build configuration list for PBXNativeTarget "Tally CanastaWidgets" */;
+			buildPhases = (
+				AE7F4B0330799200009DBE5B /* Sources */,
+				AE7F4B0430799200009DBE5B /* Frameworks */,
+				AE7F4B0530799200009DBE5B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AE7F4B0030799200009DBE5B /* Shared */,
+				AE7F4B0230799200009DBE5B /* Tally CanastaWidgets */,
+			);
+			name = "Tally CanastaWidgets";
+			packageProductDependencies = (
+				AE7F4B0A30799200009DBE5B /* TallyCore */,
+			);
+			productName = "Tally CanastaWidgets";
+			productReference = AE7F4B0130799200009DBE5B /* Tally CanastaWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -140,6 +235,9 @@
 					AE7F4A0630799100009DBE5B = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = AE7F497B307990C7009DBE5B;
+					};
+					AE7F4B0630799200009DBE5B = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -158,6 +256,7 @@
 			projectRoot = "";
 			targets = (
 				AE7F497B307990C7009DBE5B /* Tally Canasta */,
+				AE7F4B0630799200009DBE5B /* Tally CanastaWidgets */,
 				AE7F4A0630799100009DBE5B /* Tally CanastaTests */,
 			);
 		};
@@ -170,6 +269,11 @@
 			);
 		};
 		AE7F4A0530799100009DBE5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		AE7F4B0530799200009DBE5B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -187,6 +291,11 @@
 			files = (
 			);
 		};
+		AE7F4B0330799200009DBE5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -194,6 +303,11 @@
 			isa = PBXTargetDependency;
 			target = AE7F497B307990C7009DBE5B /* Tally Canasta */;
 			targetProxy = AE7F4A0730799100009DBE5B /* PBXContainerItemProxy */;
+		};
+		AE7F4B0D30799200009DBE5B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AE7F4B0630799200009DBE5B /* Tally CanastaWidgets */;
+			targetProxy = AE7F4B0C30799200009DBE5B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -324,11 +438,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Tally Canasta/Tally Canasta.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally Canasta/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Canasta";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -357,11 +473,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Tally Canasta/Tally Canasta.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 684JJ4F2FQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally Canasta/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Canasta";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -378,6 +496,70 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AE7F4B0730799200009DBE5B /* Debug configuration for PBXNativeTarget "Tally CanastaWidgets" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "Tally CanastaWidgets/Tally CanastaWidgets.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally CanastaWidgets/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Canasta Widgets";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-Canasta.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AE7F4B0830799200009DBE5B /* Release configuration for PBXNativeTarget "Tally CanastaWidgets" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "Tally CanastaWidgets/Tally CanastaWidgets.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 684JJ4F2FQ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Tally CanastaWidgets/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tally: Canasta Widgets";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.newtastic.Tally-Canasta.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
@@ -456,10 +638,22 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		AE7F4B0930799200009DBE5B /* Build configuration list for PBXNativeTarget "Tally CanastaWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE7F4B0730799200009DBE5B /* Debug configuration for PBXNativeTarget "Tally CanastaWidgets" */,
+				AE7F4B0830799200009DBE5B /* Release configuration for PBXNativeTarget "Tally CanastaWidgets" */,
+			);
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		AEC25711307A8EE700CF630F /* TallyCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TallyCore;
+		};
+		AE7F4B0A30799200009DBE5B /* TallyCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TallyCore;
 		};

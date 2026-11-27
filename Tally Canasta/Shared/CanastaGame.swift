@@ -261,6 +261,7 @@ final class RuleSet {
 
 @Model
 final class CanastaGame {
+    var gameID: UUID = UUID()
     var team1Name: String = "Team 1"
     var team2Name: String = "Team 2"
     var team3Name: String = ""
@@ -295,6 +296,7 @@ final class CanastaGame {
         team3Name: String = "",
         rules: RuleSet
     ) {
+        self.gameID = UUID()
         self.team1Name = team1Name
         self.team2Name = team2Name
         self.team3Name = team3Name

@@ -140,4 +140,16 @@ struct CanastaGameTests {
         #expect(context.saveReportingError() == nil)
         #expect(try context.fetch(FetchDescriptor<Round>()).isEmpty)
     }
+
+    @Test("TallyCanastaDeepLink builds and parses game, new-round, new-game, and how-to-play URLs cleanly")
+    func deepLinkRoundTrip() {
+        let gameID = UUID()
+
+        #expect(TallyCanastaDeepLink.parse(TallyCanastaDeepLink.game(gameID).url) == .game(gameID))
+        #expect(TallyCanastaDeepLink.parse(TallyCanastaDeepLink.newRound(gameID: gameID).url) == .newRound(gameID: gameID))
+        #expect(TallyCanastaDeepLink.parse(TallyCanastaDeepLink.newGame.url) == .newGame)
+        #expect(TallyCanastaDeepLink.parse(TallyCanastaDeepLink.howToPlay.url) == .howToPlay)
+        #expect(TallyCanastaDeepLink.parse(URL(string: "https://example.com")!) == nil)
+        #expect(TallyCanastaDeepLink.parse(URL(string: "tallycanasta://game/invalid-id")!) == nil)
+    }
 }

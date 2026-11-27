@@ -26,6 +26,7 @@ struct ContentView: View {
 
     @Query(sort: \CountdownItem.createdAt, order: .reverse) private var items: [CountdownItem]
 
+    @State private var navigationPath: [CountdownItem] = []
     @State private var selectedFilter: CountdownFilter = .all
     @State private var selectedSort: CountdownSort = .soonest
     @State private var showingNewEditor = false
@@ -34,7 +35,7 @@ struct ContentView: View {
     @State private var saveErrorMessage: String?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             TimelineView(.periodic(from: .now, by: 1.0)) { timeline in
                 let now = timeline.date
                 let filtered = filteredAndSortedItems(at: now)
@@ -152,6 +153,21 @@ struct ContentView: View {
                         await rolloverAndSyncNotifications()
                     }
                 }
+            }
+            .onOpenURL { url in
+                handleDeepLink(url)
+            }
+        }
+    }
+
+    private func handleDeepLink(_ url: URL) {
+        guard let link = TallyCountDeepLink.parse(url) else { return }
+        switch link {
+        case .newTimer:
+            showingNewEditor = true
+        case .item(let id):
+            if let matched = items.first(where: { $0.id == id }) {
+                navigationPath = [matched]
             }
         }
     }

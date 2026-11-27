@@ -18,7 +18,7 @@ struct StandingsView: View {
     ) private var allCompletedMatches: [Match]
     @Query(sort: \GameType.name) private var gameTypes: [GameType]
 
-    @State private var selectedGameTypeID: UUID? = nil
+    @Binding var selectedGameTypeID: UUID?
 
     /// Union of saved game types plus any deleted game types that still have completed matches.
     private var filterOptions: [GameTypeFilterOption] {

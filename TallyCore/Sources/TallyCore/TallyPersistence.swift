@@ -12,15 +12,26 @@ public enum TallyLogger {
 
 public extension ModelContext {
     /// Saves pending changes and logs any error rather than silently discarding it.
+    /// Automatically reloads WidgetKit timelines on success.
     @discardableResult
-    func saveLoggingErrors(context: String = #function) -> Bool {
-        saveReportingError(context: context) == nil
+    func saveLoggingErrors(
+        reloadWidgets: Bool = true,
+        context: String = #function
+    ) -> Bool {
+        saveReportingError(reloadWidgets: reloadWidgets, context: context) == nil
     }
 
     /// Saves pending changes, logging any failure and returning a user-displayable message if saving failed.
-    func saveReportingError(context: String = #function) -> String? {
+    /// Automatically reloads WidgetKit timelines on success.
+    func saveReportingError(
+        reloadWidgets: Bool = true,
+        context: String = #function
+    ) -> String? {
         do {
             try save()
+            if reloadWidgets {
+                TallyWidgetReloader.reloadAll()
+            }
             return nil
         } catch {
             TallyLogger.storage.error(
